@@ -1,0 +1,29 @@
+{
+  "anos": {
+    "2025": {
+      "meses": {
+        "01": {
+          "dados": {
+            "adiantamento": 0,
+            "pagamento": 0,
+            "total_liquido": 0
+          },
+          "calendario": {
+            "pagamentos": [],
+            "fechamento_fatura": null
+          },
+          "entradas_saidas": [
+            {
+              "data": "2025-01-10",
+              "valor": -150.75,
+              "descricao": "Conta de luz",
+              "parcela": null
+            }
+          ],
+          "contas_recorrentes_pre_fatura": [],
+          "contas_recorrentes_pos_fatura": []
+        }
+      }
+    }
+  }
+}
