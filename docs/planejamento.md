@@ -5,15 +5,15 @@
 - Organizacao por anos com abas de meses; cada mes traz dados salariais, calendario, movimentacoes, recorrentes, dashboard e infos do apartamento.
 
 ## Estado atual do repositorio
-- API Express (server/src/server.js) com rotas /api/months e validacoes reforcadas (year/month, datas no mes, valores limitados, parcelas 1..36).
-- Service de meses com CRUD para dados, calendario, entradas/saidas e recorrentes; migra dados legados gerando `id`, agrupa series via `serie_id`, gera parcelas/recorrencias futuras sob demanda e recalcula `total_liquido`.
-- Controlador/rotas expostas em `server/src/routes/months.routes.js` para GET/PUT/POST/DELETE de meses, entradas e recorrentes, com flags de `generateFuture` e `cascade` para parcelamento/recorrencia.
-- Base JSON inicial em server/data/financeiro.json com exemplo para 2025-01. Client ainda vazio; README atualizado com rotas e flags das novas automacoes.
+- API Express (server/src/server.js) com rotas /api/months e /api/years; validacoes reforcadas (year/month, datas no mes, valores limitados, parcelas 1..36).
+- Service de meses com CRUD para dados, calendario, entradas/saidas, recorrentes e agora poupanca/emprestimos; migra legados gerando `id`, agrupa series via `serie_id`, gera parcelas/recorrencias futuras sob demanda e recalcula `total_liquido`.
+- Summary service agrega mes/ano (receitas, despesas, saldo disponivel, acumulados de poupanca/emprestimos) com rotas em `months.routes.js` e `years.routes.js`; testes cobrindo meses e resumos.
+- Base JSON inicial em server/data/financeiro.json com estrutura atualizada (poupanca/emprestimos). Client segue vazio; README/schema trazem contrato e endpoints.
 
 ## Alinhamento com a ideia
-- Organizacao ano/mes e tabelas de entradas/saidas e recorrentes ja aparecem na estrutura do JSON e nas rotas de mes.
-- Ainda faltam dashboard (resumo mensal/anual, poupanca, emprestimos), calendario colorido, parcelamento/recorrencia automatica, calculo de totais e telas do apartamento.
-- Nao ha validacoes ou regras de negocio implementadas (divisao 40/60 do salario, total liquido, parcelas, diferenca de parcelas da Caixa/Construtora) nem camada de UI.
+- Organizacao ano/mes, tabelas de entradas/saidas e recorrentes e os resumos mensal/anual (incluindo poupanca/emprestimos) ja estao na API.
+- Ainda faltam export/import do JSON e backups, calendario colorido/UX, modulo apartamento e camada de UI.
+- Validacoes iniciais de datas/parcelas/limites estao presentes; regras especificas de apartamento e automacoes de backup permanecem pendentes.
 
 ## Roteiro sugerido de desenvolvimento
 1) Fundacao e contrato de dados (concluido)
@@ -23,10 +23,10 @@
 - Calculo automatico de totais por mes (saldo, total liquido), parcelamento com geracao de parcelas futuras (1..36) e serie (`serie_id`) para edicao em cascata.
 - Recorrencias com geracao ate `termina_em`, atualizacao em cascata e migracao de IDs legados.
 
-3) Dashboard e resumos
-- Agregadores mensais/anuais (saldo acumulado, gasto vs renda, metas de poupanca) e endpoints dedicados.
-- Registro de emprestimos feitos/recebidos e integracao desses valores no saldo e no dashboard.
-- Endpoints para exportar/importar o JSON e backups locais.
+3) Dashboard e resumos (entregue)
+- Agregadores mensais/anuais com saldo disponivel, poupanca acumulada e emprestimos (endpoints `/months/:year/:month/summary` e `/years/:year/summary`).
+- Rotas para registrar poupanca e emprestimos por mes, mantendo validacoes e IDs para edicao futura.
+- Tests, README e schema atualizados. Export/import de JSON e backups ficam para a etapa de entrega/operacao.
 
 4) Modulo apartamento
 - Endpoints para registrar parcelas Caixa e Construtora por mes, calculando diferenca versus mes anterior.
@@ -39,10 +39,9 @@
 
 6) Entrega e operacao
 - Scripts npm de dev/build/test, README explicando rotas, formato do JSON e como iniciar backend/frontend.
-- Automatizar verificacao de consistencia (lint, testes) e adicionar seeds ou exemplos para novos usuarios.
+- Automatizar verificacao de consistencia (lint, testes), endpoints de export/import/backups e adicionar seeds ou exemplos para novos usuarios.
 
-## Proxima fase priorizada (Fase 3 - Dashboard e resumos)
-- Implementar agregadores mensais/anuais no service (saldo acumulado, gasto vs renda, metas de poupanca, percentuais) retornando um payload de dashboard.
-- Criar endpoints dedicados para esses resumos (ex.: `/months/:year/summary` e `/years/:year/summary`) consumindo entradas, parcelas e recorrencias ja persistidas.
-- Incluir registro inicial de poupanca/emprestimos no JSON e garantir que participem dos totais do dashboard.
-- Adicionar testes cobrindo os agregadores (incluindo cenarios com parcelas futuras e recorrentes geradas) e documentar os formatos no README/schema.
+## Proxima fase priorizada (Fase 4 - Modulo apartamento)
+- Definir estrutura de dados para financiamento da Caixa e entrada da Construtora (parcelas por mes, diferenca vs mes anterior, saldo devedor).
+- Implementar endpoints para registrar/atualizar essas parcelas e expor resumo para grafico de evolucao.
+- Integrar o modulo apartamento ao dashboard/resumos anuais, mantendo validacoes de datas/valores e cobrindo com testes e documentacao.

@@ -4,6 +4,8 @@ import {
   validateDados,
   validateCalendar,
   validateMovement,
+  validateSavings,
+  validateLoans,
   resolveRecurringKey,
 } from "../validators/months.validator.js";
 
@@ -66,6 +68,50 @@ async function setMonthCalendar(req, res, next) {
     if (respondValidation(res, allErrors)) return;
 
     const updated = await monthsService.setMonthCalendar(
+      year,
+      month,
+      validation.value
+    );
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function setMonthSavings(req, res, next) {
+  try {
+    const { year, month } = req.params;
+    const errors = validateYearMonth(year, month);
+    const validation = validateSavings(req.body, {
+      expectedYear: year,
+      expectedMonth: month,
+    });
+    const allErrors = [...errors, ...validation.errors];
+    if (respondValidation(res, allErrors)) return;
+
+    const updated = await monthsService.setMonthSavings(
+      year,
+      month,
+      validation.value
+    );
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function setMonthLoans(req, res, next) {
+  try {
+    const { year, month } = req.params;
+    const errors = validateYearMonth(year, month);
+    const validation = validateLoans(req.body, {
+      expectedYear: year,
+      expectedMonth: month,
+    });
+    const allErrors = [...errors, ...validation.errors];
+    if (respondValidation(res, allErrors)) return;
+
+    const updated = await monthsService.setMonthLoans(
       year,
       month,
       validation.value
@@ -267,6 +313,8 @@ export default {
   getMonth,
   setMonthData,
   setMonthCalendar,
+  setMonthSavings,
+  setMonthLoans,
   addEntry,
   updateEntry,
   deleteEntry,

@@ -3,6 +3,7 @@ const PARCELA_REGEX = /^\d+\/\d+$/;
 const YEAR_REGEX = /^\d{4}$/;
 const MONTH_REGEX = /^(0[1-9]|1[0-2])$/;
 const YEAR_MONTH_REGEX = /^\d{4}-\d{2}$/;
+const SAVINGS_TYPES = ["aporte", "resgate"];
 
 const MAX_INSTALLMENTS = 36;
 const MAX_ABS_VALUE = 1_000_000;
@@ -34,6 +35,12 @@ function validateYearMonth(year, month) {
   }
 
   return errors;
+}
+
+function validateYear(year) {
+  return YEAR_REGEX.test(String(year))
+    ? []
+    : ["year deve ser string com formato YYYY"];
 }
 
 function validateDados(payload = {}, { partial = false } = {}) {
@@ -103,6 +110,155 @@ function validateCalendar(payload = {}, { partial = false } = {}) {
 
   if (partial && Object.keys(result).length === 0) {
     errors.push("nenhum campo enviado para atualizar calendario");
+  }
+
+  return { errors, value: result };
+}
+
+function validateSavings(payload = {}, { partial = false, expectedYear, expectedMonth } = {}) {
+  const errors = [];
+  const result = {};
+
+  const validateMovement = (movement, index) => {
+    const movementErrors = [];
+    const normalized = {};
+
+    if (!isIsoDate(movement.data)) {
+      movementErrors.push(`movimentos[${index}].data deve estar no formato YYYY-MM-DD`);
+    } else {
+      normalized.data = movement.data;
+      if (expectedYear && expectedMonth) {
+        const [yyyy, mm] = movement.data.split("-");
+        if (yyyy !== String(expectedYear) || mm !== String(expectedMonth)) {
+          movementErrors.push(`movimentos[${index}].data deve estar no mes informado`);
+        }
+      }
+    }
+
+    const valor = Number(movement.valor);
+    if (!Number.isFinite(valor)) {
+      movementErrors.push(`movimentos[${index}].valor deve ser numerico`);
+    } else if (valor <= 0) {
+      movementErrors.push(`movimentos[${index}].valor deve ser maior que zero`);
+    } else {
+      normalized.valor = valor;
+    }
+
+    if (movement.descricao === undefined) {
+      movementErrors.push(`movimentos[${index}].descricao obrigatoria`);
+    } else {
+      const desc = String(movement.descricao).trim();
+      if (!desc) {
+        movementErrors.push(`movimentos[${index}].descricao deve ser nao vazia`);
+      } else {
+        normalized.descricao = desc;
+      }
+    }
+
+    const tipo = String(movement.tipo || "").toLowerCase();
+    if (!SAVINGS_TYPES.includes(tipo)) {
+      movementErrors.push(`movimentos[${index}].tipo deve ser "aporte" ou "resgate"`);
+    } else {
+      normalized.tipo = tipo;
+    }
+
+    if (movementErrors.length) {
+      errors.push(...movementErrors);
+      return null;
+    }
+    return normalized;
+  };
+
+  if (payload.movimentos !== undefined) {
+    if (!Array.isArray(payload.movimentos)) {
+      errors.push("movimentos deve ser uma lista");
+    } else {
+      const sanitized = payload.movimentos
+        .map((movement, index) => validateMovement(movement || {}, index))
+        .filter((item) => item !== null);
+      result.movimentos = sanitized;
+    }
+  } else if (!partial) {
+    result.movimentos = [];
+  }
+
+  if (partial && Object.keys(result).length === 0) {
+    errors.push("nenhum campo enviado para poupanca");
+  }
+
+  return { errors, value: result };
+}
+
+function validateLoans(payload = {}, { partial = false, expectedYear, expectedMonth } = {}) {
+  const errors = [];
+  const result = {};
+
+  const validateList = (list, key) => {
+    if (!Array.isArray(list)) {
+      errors.push(`${key} deve ser uma lista`);
+      return [];
+    }
+
+    return list
+      .map((item, index) => {
+        const entryErrors = [];
+        const normalized = {};
+
+        if (!isIsoDate(item.data)) {
+          entryErrors.push(`${key}[${index}].data deve estar no formato YYYY-MM-DD`);
+        } else {
+          normalized.data = item.data;
+          if (expectedYear && expectedMonth) {
+            const [yyyy, mm] = item.data.split("-");
+            if (yyyy !== String(expectedYear) || mm !== String(expectedMonth)) {
+              entryErrors.push(`${key}[${index}].data deve estar no mes informado`);
+            }
+          }
+        }
+
+        const valor = Number(item.valor);
+        if (!Number.isFinite(valor)) {
+          entryErrors.push(`${key}[${index}].valor deve ser numerico`);
+        } else if (valor <= 0) {
+          entryErrors.push(`${key}[${index}].valor deve ser maior que zero`);
+        } else {
+          normalized.valor = valor;
+        }
+
+        if (item.descricao === undefined) {
+          entryErrors.push(`${key}[${index}].descricao obrigatoria`);
+        } else {
+          const desc = String(item.descricao).trim();
+          if (!desc) {
+            entryErrors.push(`${key}[${index}].descricao deve ser nao vazia`);
+          } else {
+            normalized.descricao = desc;
+          }
+        }
+
+        if (entryErrors.length) {
+          errors.push(...entryErrors);
+          return null;
+        }
+        return normalized;
+      })
+      .filter((item) => item !== null);
+  };
+
+  if (payload.feitos !== undefined) {
+    result.feitos = validateList(payload.feitos, "feitos");
+  } else if (!partial) {
+    result.feitos = [];
+  }
+
+  if (payload.recebidos !== undefined) {
+    result.recebidos = validateList(payload.recebidos, "recebidos");
+  } else if (!partial) {
+    result.recebidos = [];
+  }
+
+  if (partial && Object.keys(result).length === 0) {
+    errors.push("nenhum campo enviado para emprestimos");
   }
 
   return { errors, value: result };
@@ -246,9 +402,12 @@ function resolveRecurringKey(period) {
 
 export {
   validateYearMonth,
+  validateYear,
   validateDados,
   validateCalendar,
   validateMovement,
+  validateSavings,
+  validateLoans,
   resolveRecurringKey,
   MAX_INSTALLMENTS,
 };

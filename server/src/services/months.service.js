@@ -22,6 +22,13 @@ function ensureMonthStructure(db, year, month) {
       entradas_saidas: [],
       contas_recorrentes_pre_fatura: [],
       contas_recorrentes_pos_fatura: [],
+      poupanca: {
+        movimentos: [],
+      },
+      emprestimos: {
+        feitos: [],
+        recebidos: [],
+      },
     };
   }
 
@@ -163,6 +170,33 @@ function migrateMonth(monthRef) {
     monthRef.contas_recorrentes_pos_fatura = [];
     changed = true;
   }
+  if (!monthRef.poupanca || typeof monthRef.poupanca !== "object") {
+    monthRef.poupanca = { movimentos: [] };
+    changed = true;
+  }
+  if (!Array.isArray(monthRef.poupanca.movimentos)) {
+    monthRef.poupanca.movimentos = [];
+    changed = true;
+  }
+  if (!monthRef.emprestimos || typeof monthRef.emprestimos !== "object") {
+    monthRef.emprestimos = { feitos: [], recebidos: [] };
+    changed = true;
+  }
+  if (!Array.isArray(monthRef.emprestimos.feitos)) {
+    monthRef.emprestimos.feitos = [];
+    changed = true;
+  }
+  if (!Array.isArray(monthRef.emprestimos.recebidos)) {
+    monthRef.emprestimos.recebidos = [];
+    changed = true;
+  }
+
+  const addIdsToList = (list) =>
+    list.map((item) => {
+      if (item.id) return item;
+      changed = true;
+      return { ...item, id: randomUUID() };
+    });
 
   const migrateList = (list, allowParcela) =>
     list.map((item) => {
@@ -185,6 +219,9 @@ function migrateMonth(monthRef) {
     monthRef.contas_recorrentes_pos_fatura,
     false
   );
+  monthRef.poupanca.movimentos = addIdsToList(monthRef.poupanca.movimentos);
+  monthRef.emprestimos.feitos = addIdsToList(monthRef.emprestimos.feitos);
+  monthRef.emprestimos.recebidos = addIdsToList(monthRef.emprestimos.recebidos);
 
   const previousTotal = monthRef.dados.total_liquido;
   recalcMonthTotals(monthRef);
@@ -192,6 +229,14 @@ function migrateMonth(monthRef) {
     changed = true;
   }
   return changed;
+}
+
+function normalizeListWithIds(list = []) {
+  return list.map((item) => ({
+    ...item,
+    id: item.id ?? randomUUID(),
+    valor: Number(item.valor),
+  }));
 }
 
 async function readDbWithMigration() {
@@ -420,6 +465,43 @@ async function setMonthCalendar(year, month, calendar) {
   return monthRef;
 }
 
+async function setMonthSavings(year, month, savings) {
+  const db = await readDbWithMigration();
+  const monthRef = ensureMonthStructure(db, year, month);
+
+  monthRef.poupanca.movimentos = normalizeListWithIds(
+    savings.movimentos || []
+  ).map((item) => ({
+    ...item,
+    descricao: item.descricao,
+    tipo: item.tipo,
+  }));
+
+  recalcMonthTotals(monthRef);
+  await jsonStorage.write(db);
+  return monthRef;
+}
+
+async function setMonthLoans(year, month, loans) {
+  const db = await readDbWithMigration();
+  const monthRef = ensureMonthStructure(db, year, month);
+
+  monthRef.emprestimos = {
+    feitos: normalizeListWithIds(loans.feitos || []).map((item) => ({
+      ...item,
+      descricao: item.descricao,
+    })),
+    recebidos: normalizeListWithIds(loans.recebidos || []).map((item) => ({
+      ...item,
+      descricao: item.descricao,
+    })),
+  };
+
+  recalcMonthTotals(monthRef);
+  await jsonStorage.write(db);
+  return monthRef;
+}
+
 async function addEntry(year, month, entry, { generateFutureInstallments = false } = {}) {
   const db = await readDbWithMigration();
   const monthRef = ensureMonthStructure(db, year, month);
@@ -575,6 +657,8 @@ export default {
   getMonth,
   setMonthData,
   setMonthCalendar,
+  setMonthSavings,
+  setMonthLoans,
   addEntry,
   updateEntry,
   deleteEntry,

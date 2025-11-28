@@ -21,7 +21,14 @@
             }
           ],
           "contas_recorrentes_pre_fatura": [],
-          "contas_recorrentes_pos_fatura": []
+          "contas_recorrentes_pos_fatura": [],
+          "poupanca": {
+            "movimentos": []
+          },
+          "emprestimos": {
+            "feitos": [],
+            "recebidos": []
+          }
         }
       }
     }

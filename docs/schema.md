@@ -18,7 +18,9 @@
           "calendario": { ... },
           "entradas_saidas": [ ... ],
           "contas_recorrentes_pre_fatura": [ ... ],
-          "contas_recorrentes_pos_fatura": [ ... ]
+          "contas_recorrentes_pos_fatura": [ ... ],
+          "poupanca": { ... },
+          "emprestimos": { ... }
         }
       }
     }
@@ -37,6 +39,8 @@
 - `entradas_saidas` (Movimentacao[]): lista de lancamentos do mes.
 - `contas_recorrentes_pre_fatura` (Recorrente[]): contas recorrentes ate o fechamento da fatura (sem parcela).
 - `contas_recorrentes_pos_fatura` (Recorrente[]): contas recorrentes apos o fechamento (sem parcela).
+- `poupanca`: { `movimentos`: MovimentoPoupanca[] }.
+- `emprestimos`: { `feitos`: MovimentoEmprestimo[], `recebidos`: MovimentoEmprestimo[] }.
 
 ## Tipo `Movimentacao`
 ```json
@@ -74,11 +78,41 @@ Notas:
 - A API gera `serie_id` automaticamente para recorrencias, permitindo aplicacao de edicoes em cascata.
 - `recorrencia.termina_em` deve ser igual ou posterior ao mes de origem quando usado para gerar meses futuros.
 
-## Dashboard (futuro)
-- Resumo mensal: saldo do mes (salario + entradas - saidas - recorrentes), total liquido, percentuais.
-- Resumo anual: soma de saldos mensais, mediana de gastos/receitas, varicoes.
-- Poupanca: saldo guardado ate o mes, movimentos de aporte/retirada.
-- Emprestimos: lista de emprestimos feitos/recebidos com saldo em aberto.
+## Tipo `MovimentoPoupanca`
+```json
+{
+  "id": "uuid",
+  "data": "YYYY-MM-DD",
+  "valor": 200.0,
+  "descricao": "Aporte extra",
+  "tipo": "aporte" // ou "resgate"
+}
+```
+Notas:
+- Valores sempre positivos; o sinal e definido por `tipo` (aporte aumenta saldo, resgate diminui).
+- Datas devem pertencer ao mes/ano da rota.
+- O acumulado da poupanca e calculado no resumo mensal/anual, nao gravado em cache.
+
+## Tipo `MovimentoEmprestimo`
+```json
+{
+  "id": "uuid",
+  "data": "YYYY-MM-DD",
+  "valor": 150.0,
+  "descricao": "Emprestimo para mae"
+}
+```
+Notas:
+- `emprestimos.feitos` representa dinheiro que saiu (ativo a receber) e `emprestimos.recebidos` dinheiro que entrou (passivo a pagar).
+- Datas devem pertencer ao mes/ano da rota.
+
+## Resumos e dashboard (API /summary)
+- `GET /api/months/:year/:month/summary` retorna um snapshot contendo:
+  - `referencia`, `salarios` (adiantamento, pagamento, bruto).
+  - `variaveis` (entradas, saidas, saldo) e `recorrentes.pre_fatura|pos_fatura` (totais).
+  - `resultado` (receitas, despesas, liquido calculado, `saldo_disponivel = liquido - poupanca.saldo_mes + emprestimos.saldo_mes`).
+  - `poupanca` (aportes, resgates, saldo_mes, saldo_acumulado) e `emprestimos` (feitos, recebidos, saldo_mes, saldo_acumulado).
+- `GET /api/years/:year/summary` agrega todos os meses do ano, trazendo `totais`, `medias` (liquido, saldo_disponivel) e a lista de `meses` com os resumos mensais.
 
 ## Apartamento (futuro)
 - `financiamento_caixa`: [{ `ano`, `mes`, `valor_parcela`, `diferenca_vs_mes_anterior` }].
@@ -91,7 +125,7 @@ Notas:
   "dados": {
     "adiantamento": 4000,
     "pagamento": 6000,
-    "total_liquido": 10000
+    "total_liquido": 9729.25
   },
   "calendario": {
     "pagamentos": ["2025-01-10", "2025-01-25"],
@@ -103,6 +137,17 @@ Notas:
   "contas_recorrentes_pre_fatura": [
     { "id": "2", "data": "2025-01-05", "valor": -120.00, "descricao": "Internet" }
   ],
-  "contas_recorrentes_pos_fatura": []
+  "contas_recorrentes_pos_fatura": [],
+  "poupanca": {
+    "movimentos": [
+      { "id": "3", "data": "2025-01-05", "valor": 500.00, "descricao": "Aporte", "tipo": "aporte" }
+    ]
+  },
+  "emprestimos": {
+    "feitos": [],
+    "recebidos": [
+      { "id": "4", "data": "2025-01-08", "valor": 200.00, "descricao": "Ajuda da familia" }
+    ]
+  }
 }
 ```

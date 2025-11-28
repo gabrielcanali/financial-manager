@@ -1,33 +1,19 @@
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, it, beforeEach, afterEach } from "node:test";
+import { createDbHelper } from "./helpers/db.js";
 
-const DB_TEST_FILE = path.join("tests", "tmp", "db-test.json");
+const {
+  DB_TEST_FILE,
+  DB_ABSOLUTE_PATH,
+  resetTestDb,
+  seedDb,
+  readDb,
+} = createDbHelper("tests/tmp/db-months.json");
+
 process.env.DB_FILE = DB_TEST_FILE;
 
 const monthsService = (await import("../src/services/months.service.js")).default;
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DB_ABSOLUTE_PATH = path.resolve(__dirname, "..", DB_TEST_FILE);
-
-async function resetTestDb() {
-  await fs.mkdir(path.dirname(DB_ABSOLUTE_PATH), { recursive: true });
-  await fs.writeFile(DB_ABSOLUTE_PATH, "", "utf-8");
-}
-
-async function seedDb(content) {
-  await fs.mkdir(path.dirname(DB_ABSOLUTE_PATH), { recursive: true });
-  const json = JSON.stringify(content, null, 2);
-  await fs.writeFile(DB_ABSOLUTE_PATH, json, "utf-8");
-}
-
-async function readDb() {
-  const raw = await fs.readFile(DB_ABSOLUTE_PATH, "utf-8");
-  return raw.trim() ? JSON.parse(raw) : {};
-}
 
 describe("months.service", () => {
   beforeEach(resetTestDb);
@@ -60,6 +46,9 @@ describe("months.service", () => {
     assert.ok(month.entradas_saidas[0].id);
     assert.ok(month.contas_recorrentes_pre_fatura[0].id);
     assert.equal(month.dados.total_liquido, 100 + 50 - 20 - 30);
+    assert.deepEqual(month.poupanca.movimentos, []);
+    assert.deepEqual(month.emprestimos.feitos, []);
+    assert.deepEqual(month.emprestimos.recebidos, []);
 
     const persisted = await readDb();
     assert.ok(

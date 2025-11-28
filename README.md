@@ -19,14 +19,18 @@ Health check: `GET /health`.
 
 ## Rotas principais (prefixed por /api)
 - `GET /months/:year/:month` - retorna o mes (`year=YYYY`, `month=MM`).
+- `GET /months/:year/:month/summary` - resumo mensal (receitas, despesas, poupanca, emprestimos, saldo disponivel).
 - `PUT /months/:year/:month/data` - define `adiantamento` e `pagamento`.
 - `PUT /months/:year/:month/calendar` - define `pagamentos[]` e `fechamento_fatura`.
+- `PUT /months/:year/:month/savings` - define movimentos de poupanca (`movimentos`: lista com `data`, `valor`, `descricao`, `tipo` = `aporte`|`resgate`).
+- `PUT /months/:year/:month/loans` - define emprestimos feitos/recebidos (`feitos`/`recebidos`: listas com `data`, `valor`, `descricao`).
 - `POST /months/:year/:month/entries` - cria lancamento de entrada/saida.
 - `PUT /months/:year/:month/entries/:entryId` - atualiza lancamento.
 - `DELETE /months/:year/:month/entries/:entryId` - remove lancamento.
 - `POST /months/:year/:month/recurrents/:period` - cria recorrente (`period` = `pre` ou `pos`).
 - `PUT /months/:year/:month/recurrents/:period/:recurringId` - atualiza recorrente.
 - `DELETE /months/:year/:month/recurrents/:period/:recurringId` - remove recorrente.
+- `GET /years/:year/summary` - resumo anual agregado (salarios, variaveis, poupanca, emprestimos).
 - Flags opcionais:
   - `?generateFuture=true` em `POST /entries` cria automaticamente as demais parcelas futuras baseadas em `parcela` (`n/m`).
   - `?generateFuture=true` em `POST /recurrents` gera meses futuros ate `recorrencia.termina_em`.
