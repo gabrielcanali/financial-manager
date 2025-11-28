@@ -18,15 +18,19 @@ Variaveis:
 Health check: `GET /health`.
 
 ## Rotas principais (prefixed por /api)
-- `GET /months/:year/:month` — retorna o mes (`year=YYYY`, `month=MM`).
-- `PUT /months/:year/:month/data` — define `adiantamento` e `pagamento`.
-- `PUT /months/:year/:month/calendar` — define `pagamentos[]` e `fechamento_fatura`.
-- `POST /months/:year/:month/entries` — cria lancamento de entrada/saida.
-- `PUT /months/:year/:month/entries/:entryId` — atualiza lancamento.
-- `DELETE /months/:year/:month/entries/:entryId` — remove lancamento.
-- `POST /months/:year/:month/recurrents/:period` — cria recorrente (`period` = `pre` ou `pos`).
-- `PUT /months/:year/:month/recurrents/:period/:recurringId` — atualiza recorrente.
-- `DELETE /months/:year/:month/recurrents/:period/:recurringId` — remove recorrente.
+- `GET /months/:year/:month` - retorna o mes (`year=YYYY`, `month=MM`).
+- `PUT /months/:year/:month/data` - define `adiantamento` e `pagamento`.
+- `PUT /months/:year/:month/calendar` - define `pagamentos[]` e `fechamento_fatura`.
+- `POST /months/:year/:month/entries` - cria lancamento de entrada/saida.
+- `PUT /months/:year/:month/entries/:entryId` - atualiza lancamento.
+- `DELETE /months/:year/:month/entries/:entryId` - remove lancamento.
+- `POST /months/:year/:month/recurrents/:period` - cria recorrente (`period` = `pre` ou `pos`).
+- `PUT /months/:year/:month/recurrents/:period/:recurringId` - atualiza recorrente.
+- `DELETE /months/:year/:month/recurrents/:period/:recurringId` - remove recorrente.
+- Flags opcionais:
+  - `?generateFuture=true` em `POST /entries` cria automaticamente as demais parcelas futuras baseadas em `parcela` (`n/m`).
+  - `?generateFuture=true` em `POST /recurrents` gera meses futuros ate `recorrencia.termina_em`.
+  - `?cascade=true` em `PUT /entries` ou `PUT /recurrents` aplica a alteracao para toda a serie (parcelas/recorrencias restantes).
 
 Formato de datas: ISO `YYYY-MM-DD`. Valores numericos (positivo=entrada, negativo=saida).
 

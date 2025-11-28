@@ -15,6 +15,12 @@ function respondValidation(res, errors) {
   return false;
 }
 
+function parseBooleanQuery(value) {
+  if (value === undefined) return false;
+  const normalized = String(value).toLowerCase();
+  return ["true", "1", "yes", "sim"].includes(normalized);
+}
+
 async function getMonth(req, res, next) {
   try {
     const { year, month } = req.params;
@@ -74,14 +80,25 @@ async function addEntry(req, res, next) {
   try {
     const { year, month } = req.params;
     const errors = validateYearMonth(year, month);
-    const validation = validateMovement(req.body, { allowParcela: true });
+    const generateFuture = parseBooleanQuery(
+      req.query.generateFuture ?? req.query.gerarParcelas
+    );
+    const validation = validateMovement(req.body, {
+      allowParcela: true,
+      expectedYear: year,
+      expectedMonth: month,
+    });
     const allErrors = [...errors, ...validation.errors];
+    if (generateFuture && !validation.value.parcela) {
+      allErrors.push("parcela obrigatoria para gerar parcelas futuras");
+    }
     if (respondValidation(res, allErrors)) return;
 
     const updated = await monthsService.addEntry(
       year,
       month,
-      validation.value
+      validation.value,
+      { generateFutureInstallments: generateFuture }
     );
     res.status(201).json(updated);
   } catch (err) {
@@ -93,9 +110,12 @@ async function updateEntry(req, res, next) {
   try {
     const { year, month, entryId } = req.params;
     const errors = validateYearMonth(year, month);
+    const cascade = parseBooleanQuery(req.query.cascade);
     const validation = validateMovement(req.body, {
       allowParcela: true,
       partial: true,
+      expectedYear: year,
+      expectedMonth: month,
     });
     const allErrors = [...errors, ...validation.errors];
     if (respondValidation(res, allErrors)) return;
@@ -104,7 +124,8 @@ async function updateEntry(req, res, next) {
       year,
       month,
       entryId,
-      validation.value
+      validation.value,
+      { cascade }
     );
 
     if (!updated) {
@@ -138,6 +159,7 @@ async function addRecurring(req, res, next) {
   try {
     const { year, month, period } = req.params;
     const errors = validateYearMonth(year, month);
+    const generateFuture = parseBooleanQuery(req.query.generateFuture);
     const recurringKey = resolveRecurringKey(period);
     if (!recurringKey) {
       errors.push('period deve ser "pre" ou "pos"');
@@ -147,15 +169,22 @@ async function addRecurring(req, res, next) {
       allowParcela: false,
       allowRecorrencia: true,
       partial: false,
+      expectedYear: year,
+      expectedMonth: month,
+      minYearMonth: generateFuture ? `${year}-${month}` : undefined,
     });
     const allErrors = [...errors, ...validation.errors];
+    if (generateFuture && !validation.value.recorrencia?.termina_em) {
+      allErrors.push("recorrencia.termina_em obrigatorio para gerar meses futuros");
+    }
     if (respondValidation(res, allErrors)) return;
 
     const updated = await monthsService.addRecurring(
       year,
       month,
       recurringKey,
-      validation.value
+      validation.value,
+      { generateFutureRecurring: generateFuture }
     );
     if (!updated) {
       return res.status(404).json({ error: "Periodo invalido" });
@@ -171,6 +200,7 @@ async function updateRecurring(req, res, next) {
   try {
     const { year, month, period, recurringId } = req.params;
     const errors = validateYearMonth(year, month);
+    const cascade = parseBooleanQuery(req.query.cascade);
     const recurringKey = resolveRecurringKey(period);
     if (!recurringKey) {
       errors.push('period deve ser "pre" ou "pos"');
@@ -180,6 +210,9 @@ async function updateRecurring(req, res, next) {
       allowParcela: false,
       allowRecorrencia: true,
       partial: true,
+      expectedYear: year,
+      expectedMonth: month,
+      minYearMonth: `${year}-${month}`,
     });
     const allErrors = [...errors, ...validation.errors];
     if (respondValidation(res, allErrors)) return;
@@ -189,7 +222,8 @@ async function updateRecurring(req, res, next) {
       month,
       recurringKey,
       recurringId,
-      validation.value
+      validation.value,
+      { cascade }
     );
 
     if (!updated) {

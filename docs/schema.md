@@ -42,6 +42,7 @@
 ```json
 {
   "id": "uuid",           // recomendado para edicao/remocao
+  "serie_id": "uuid",     // opcional; identifica o grupo de parcelas ou serie recorrente
   "data": "YYYY-MM-DD",   // data do lancamento
   "valor": -150.75,         // positivo=entrada, negativo=saida
   "descricao": "Conta de luz",
@@ -50,13 +51,16 @@
 ```
 Notas:
 - `id` pode ser omitido no arquivo legado, mas deve ser gerado na criacao via API.
-- O campo `parcela` segue o padrao "n/m"; para recorrentes nao deve ser usado.
+- `serie_id` e usado para agrupar e aplicar edicoes em cascata em uma mesma serie de parcelas.
+- O campo `parcela` segue o padrao "n/m" com limites `1 <= n <= m <= 36`; para recorrentes nao deve ser usado.
+- `data` deve pertencer ao mes de referencia informado na rota.
 
 ## Tipo `Recorrente`
 Mesmo formato de `Movimentacao`, mas sem `parcela` e com opcional de controle de recorrencia:
 ```json
 {
   "id": "uuid",
+  "serie_id": "uuid",        // agrupa uma serie de recorrencias
   "data": "YYYY-MM-DD",     // dia de cobranca dentro do mes de referencia
   "valor": -200.00,
   "descricao": "Internet",
@@ -66,6 +70,9 @@ Mesmo formato de `Movimentacao`, mas sem `parcela` e com opcional de controle de
   }
 }
 ```
+Notas:
+- A API gera `serie_id` automaticamente para recorrencias, permitindo aplicacao de edicoes em cascata.
+- `recorrencia.termina_em` deve ser igual ou posterior ao mes de origem quando usado para gerar meses futuros.
 
 ## Dashboard (futuro)
 - Resumo mensal: saldo do mes (salario + entradas - saidas - recorrentes), total liquido, percentuais.

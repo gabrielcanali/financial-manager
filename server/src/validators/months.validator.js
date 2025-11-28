@@ -2,9 +2,24 @@ const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const PARCELA_REGEX = /^\d+\/\d+$/;
 const YEAR_REGEX = /^\d{4}$/;
 const MONTH_REGEX = /^(0[1-9]|1[0-2])$/;
+const YEAR_MONTH_REGEX = /^\d{4}-\d{2}$/;
+
+const MAX_INSTALLMENTS = 36;
+const MAX_ABS_VALUE = 1_000_000;
 
 function isIsoDate(value) {
   return typeof value === "string" && ISO_DATE_REGEX.test(value);
+}
+
+function compareYearMonthStr(a, b) {
+  const [aYear, aMonth] = a.split("-");
+  const [bYear, bMonth] = b.split("-");
+  if (aYear === bYear && aMonth === bMonth) return 0;
+  return aYear !== bYear
+    ? (aYear > bYear ? 1 : -1)
+    : aMonth > bMonth
+    ? 1
+    : -1;
 }
 
 function validateYearMonth(year, month) {
@@ -93,11 +108,18 @@ function validateCalendar(payload = {}, { partial = false } = {}) {
   return { errors, value: result };
 }
 
-const YEAR_MONTH_REGEX = /^\d{4}-\d{2}$/;
-
 function validateMovement(
   payload = {},
-  { allowParcela = true, allowRecorrencia = false, partial = false } = {}
+  {
+    allowParcela = true,
+    allowRecorrencia = false,
+    partial = false,
+    expectedYear,
+    expectedMonth,
+    maxValor = MAX_ABS_VALUE,
+    maxParcelas = MAX_INSTALLMENTS,
+    minYearMonth,
+  } = {}
 ) {
   const errors = [];
   const result = {};
@@ -107,6 +129,12 @@ function validateMovement(
       errors.push("data deve estar no formato YYYY-MM-DD");
     } else {
       result.data = payload.data;
+      if (expectedYear && expectedMonth) {
+        const [yyyy, mm] = payload.data.split("-");
+        if (yyyy !== String(expectedYear) || mm !== String(expectedMonth)) {
+          errors.push("data deve estar dentro do mes informado");
+        }
+      }
     }
   } else if (!partial) {
     errors.push("data obrigatoria");
@@ -116,6 +144,8 @@ function validateMovement(
     const num = Number(payload.valor);
     if (!Number.isFinite(num)) {
       errors.push("valor deve ser numerico");
+    } else if (Math.abs(num) > maxValor) {
+      errors.push(`valor deve estar entre -${maxValor} e ${maxValor}`);
     } else {
       result.valor = num;
     }
@@ -142,7 +172,23 @@ function validateMovement(
       ) {
         errors.push('parcela deve estar no formato "n/m" ou ser null');
       } else {
-        result.parcela = payload.parcela ?? null;
+        const [currentStr, totalStr] = (payload.parcela || "").split("/");
+        const current = Number(currentStr);
+        const total = Number(totalStr);
+
+        if (payload.parcela !== null) {
+          if (!Number.isInteger(current) || !Number.isInteger(total)) {
+            errors.push("parcela deve conter numeros inteiros");
+          } else if (total > maxParcelas) {
+            errors.push(`parcela nao pode ultrapassar ${maxParcelas} unidades`);
+          } else if (current < 1 || current > total) {
+            errors.push('parcela deve seguir o formato "n/m" onde 1 <= n <= m');
+          } else {
+            result.parcela = `${current}/${total}`;
+          }
+        } else {
+          result.parcela = null;
+        }
       }
     } else if (!partial) {
       result.parcela = null;
@@ -166,6 +212,8 @@ function validateMovement(
       if (termina_em !== undefined) {
         if (termina_em !== null && !YEAR_MONTH_REGEX.test(termina_em)) {
           errors.push('recorrencia.termina_em deve ser "YYYY-MM" ou null');
+        } else if (termina_em && minYearMonth && compareYearMonthStr(termina_em, minYearMonth) < 0) {
+          errors.push("recorrencia.termina_em nao pode ser anterior ao mes informado");
         } else {
           result.recorrencia = {
             ...(result.recorrencia || {}),
@@ -202,4 +250,5 @@ export {
   validateCalendar,
   validateMovement,
   resolveRecurringKey,
+  MAX_INSTALLMENTS,
 };

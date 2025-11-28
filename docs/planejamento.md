@@ -5,10 +5,10 @@
 - Organizacao por anos com abas de meses; cada mes traz dados salariais, calendario, movimentacoes, recorrentes, dashboard e infos do apartamento.
 
 ## Estado atual do repositorio
-- API Express (server/src/server.js) com rotas /api/months e validacao basica (year/month, datas ISO, valores, parcela).
-- Service de meses com CRUD para dados, calendario, entradas/saidas e recorrentes; gera `id` (UUID) e recalcula `total_liquido` automaticamente.
-- Controlador/rotas expostas em `server/src/routes/months.routes.js` para GET/PUT/POST/DELETE de meses, entradas e recorrentes.
-- Base JSON inicial em server/data/financeiro.json com exemplo para 2025-01. Client ainda vazio e README atualizado com rotas.
+- API Express (server/src/server.js) com rotas /api/months e validacoes reforcadas (year/month, datas no mes, valores limitados, parcelas 1..36).
+- Service de meses com CRUD para dados, calendario, entradas/saidas e recorrentes; migra dados legados gerando `id`, agrupa series via `serie_id`, gera parcelas/recorrencias futuras sob demanda e recalcula `total_liquido`.
+- Controlador/rotas expostas em `server/src/routes/months.routes.js` para GET/PUT/POST/DELETE de meses, entradas e recorrentes, com flags de `generateFuture` e `cascade` para parcelamento/recorrencia.
+- Base JSON inicial em server/data/financeiro.json com exemplo para 2025-01. Client ainda vazio; README atualizado com rotas e flags das novas automacoes.
 
 ## Alinhamento com a ideia
 - Organizacao ano/mes e tabelas de entradas/saidas e recorrentes ja aparecem na estrutura do JSON e nas rotas de mes.
@@ -19,9 +19,9 @@
 1) Fundacao e contrato de dados (concluido)
 - Schema documentado em `docs/schema.md`, validacoes iniciais aplicadas nas rotas, CRUD basico implementado e testes de service.
 
-2) Fluxo de meses e recorrencias
-- Calculo automatico de totais por mes (saldo, total liquido) ja implementado; falta parcelamento e recorrencia distribuida em meses futuros.
-- Suporte a parcelamento/recorrencia: gerar parcelas futuras, marcar ultima parcela, evitar duplicatas, e possivel edicao em cascata.
+2) Fluxo de meses e recorrencias (entregue)
+- Calculo automatico de totais por mes (saldo, total liquido), parcelamento com geracao de parcelas futuras (1..36) e serie (`serie_id`) para edicao em cascata.
+- Recorrencias com geracao ate `termina_em`, atualizacao em cascata e migracao de IDs legados.
 
 3) Dashboard e resumos
 - Agregadores mensais/anuais (saldo acumulado, gasto vs renda, metas de poupanca) e endpoints dedicados.
@@ -41,9 +41,8 @@
 - Scripts npm de dev/build/test, README explicando rotas, formato do JSON e como iniciar backend/frontend.
 - Automatizar verificacao de consistencia (lint, testes) e adicionar seeds ou exemplos para novos usuarios.
 
-## Proxima fase priorizada (Fase 2 - Parcelas, recorrencia e consistencia)
-- Migrar dados legados em `server/data/financeiro.json` gerando `id` para lancamentos/recorrentes para permitir update/delete.
-- Implementar geracao de parcelas e recorrencias futuras (ex.: criar N parcelas automaticas em meses subsequentes), com controle de ultima parcela e evitacao de duplicatas.
-- Adicionar endpoints/flags para aplicar edicoes em cascata (ex.: atualizar valor de todas parcelas restantes).
-- Fortalecer validacoes: limites para valores/data, evitar datas fora do mes, garantir que parcela `n/m` corresponda ao total de parcelas geradas.
-- Cobrir os novos fluxos com testes de unidade/integracao (parcelamento, recorrencia futura e recalc de totais).
+## Proxima fase priorizada (Fase 3 - Dashboard e resumos)
+- Implementar agregadores mensais/anuais no service (saldo acumulado, gasto vs renda, metas de poupanca, percentuais) retornando um payload de dashboard.
+- Criar endpoints dedicados para esses resumos (ex.: `/months/:year/summary` e `/years/:year/summary`) consumindo entradas, parcelas e recorrencias ja persistidas.
+- Incluir registro inicial de poupanca/emprestimos no JSON e garantir que participem dos totais do dashboard.
+- Adicionar testes cobrindo os agregadores (incluindo cenarios com parcelas futuras e recorrentes geradas) e documentar os formatos no README/schema.
