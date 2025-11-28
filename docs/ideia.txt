@@ -1,0 +1,32 @@
+Quero criar um projeto que será de estudo e para uso pessoal. É um painel de controle financeiro semelhante ao que já tenho em uma planilha. Quero fazer um armazenamento local, em JSON, mesmo que esse JSON fique imenso. É para possibilitar importar e exportar facilmente, e sem riscos de segurança. 
+
+Minha planilha atualmente conta com: 
+1. Abas -> Meses 
+2. Agrupamento de abas -> Anos 
+3. Em cada mês: 
+    - Dados: 
+        * Adiantamento (40% do Salário)
+        * Pagamento (60% do Salário)
+        * Total (Liquido) 
+    - Visualização do calendário do mês 
+        * Dias de pagamentos verdes 
+        * Dia de fechamento da fatura vermelho 
+    - Tabela com entradas e saídas
+        * Data
+        * Valor (Positivo ou negativo)
+        * Descrição 
+        * Parcela (Se sim colocar por exemplo: 2/10, 3/10 e assim por diante) 
+        * Em baixo: Total
+    - Tabela com contas recorrentes até fechamento da fatura 
+        * Mesma estrutura da tabela com entradas e saídas porém sem parcela 
+    - Tabela com contas recorrentes pós fechamento da fatura 
+        * Mesma estrutura da tabela com entradas e saídas porém sem parcela 
+    - Aba de Dashboard 
+        * Resumo mensal (Saldo negativo ou positivo) 
+        * Resumo anual 
+        * Dinheiro guardado
+        * Empréstimos feitos (Por exemplo, se emprestei dinheiro para meu pai, minha mãe e afins)
+    - Aba sobre meu apartamento
+        * Tabela com valor mensal da parcela do financiamento da CAIXA (Coluna com diferença de valor entre o mês atual e o mês anterior)
+        * Tabela com valor mensal da parcela da entrada Construtora
+        * Gráfico de evolução do valor da parcela do financiamento
