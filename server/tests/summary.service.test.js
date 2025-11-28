@@ -11,6 +11,7 @@ process.env.DB_FILE = DB_TEST_FILE;
 
 const monthsService = (await import("../src/services/months.service.js")).default;
 const summaryService = (await import("../src/services/summary.service.js")).default;
+const apartmentService = (await import("../src/services/apartment.service.js")).default;
 
 describe("summary.service", () => {
   beforeEach(resetTestDb);
@@ -71,6 +72,10 @@ describe("summary.service", () => {
         { data: "2025-01-10", valor: 150, descricao: "Peguei emprestado" },
       ],
     });
+    await apartmentService.setMonthData("2025", "01", {
+      financiamento_caixa: { valor_parcela: 1800, saldo_devedor: 190000 },
+      entrada_construtora: { valor_parcela: 400, saldo_devedor: 8000 },
+    });
 
     const summary = await summaryService.getMonthSummary("2025", "01");
 
@@ -79,6 +84,11 @@ describe("summary.service", () => {
     assert.equal(summary.poupanca.saldo_mes, 150);
     assert.equal(summary.emprestimos.saldo_mes, 50);
     assert.equal(summary.resultado.saldo_disponivel, 2950);
+    assert.equal(summary.apartamento.totais.parcelas, 2200);
+    assert.equal(
+      summary.apartamento.financiamento_caixa.saldo_devedor,
+      190000
+    );
   });
 
   it("gera resumo anual acumulando poupanca e emprestimos", async () => {
@@ -106,6 +116,10 @@ describe("summary.service", () => {
       feitos: [],
       recebidos: [{ data: "2025-01-08", valor: 50, descricao: "Ajuda" }],
     });
+    await apartmentService.setMonthData("2025", "01", {
+      financiamento_caixa: { valor_parcela: 1800, saldo_devedor: 190000 },
+      entrada_construtora: { valor_parcela: 400, saldo_devedor: 9000 },
+    });
 
     await monthsService.setMonthData("2025", "02", {
       adiantamento: 500,
@@ -131,6 +145,10 @@ describe("summary.service", () => {
       feitos: [{ data: "2025-02-12", valor: 200, descricao: "Emprestimo mae" }],
       recebidos: [],
     });
+    await apartmentService.setMonthData("2025", "02", {
+      financiamento_caixa: { valor_parcela: 1850, saldo_devedor: 188000 },
+      entrada_construtora: { valor_parcela: 600, saldo_devedor: 5000 },
+    });
 
     const yearly = await summaryService.getYearSummary("2025");
     assert(yearly, "deve retornar resumo anual");
@@ -139,6 +157,11 @@ describe("summary.service", () => {
     assert.equal(yearly.totais.emprestimos.saldo_final, -150);
     assert.equal(yearly.medias.liquido, 1875);
     assert.equal(yearly.medias.saldo_disponivel, 1675);
+    assert.equal(yearly.totais.apartamento.parcelas.total, 4650);
+    assert.equal(
+      yearly.totais.apartamento.saldo_devedor_final.total,
+      193000
+    );
     assert.deepEqual(yearly.meses_disponiveis, ["01", "02"]);
   });
 });

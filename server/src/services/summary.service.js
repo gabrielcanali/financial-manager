@@ -1,4 +1,5 @@
 import monthsService from "./months.service.js";
+import apartmentService from "./apartment.service.js";
 
 function padMonth(month) {
   return String(month).padStart(2, "0");
@@ -62,7 +63,7 @@ function summarizeLoans(emprestimos = {}, previousBalance = 0) {
   };
 }
 
-function buildMonthSummary(year, month, monthRef, { savingsAccum, loansAccum }) {
+function buildMonthSummary(year, month, monthRef, { savingsAccum, loansAccum, apartment }) {
   const salarios = {
     adiantamento: Number(monthRef.dados?.adiantamento || 0),
     pagamento: Number(monthRef.dados?.pagamento || 0),
@@ -130,6 +131,12 @@ function buildMonthSummary(year, month, monthRef, { savingsAccum, loansAccum }) 
     },
     poupanca,
     emprestimos,
+    apartamento: apartment ?? {
+      referencia: `${year}-${month}`,
+      financiamento_caixa: null,
+      entrada_construtora: null,
+      totais: null,
+    },
   };
 }
 
@@ -155,10 +162,12 @@ async function getMonthSummary(year, month) {
   let loansAccum = 0;
   let result = null;
 
-  months.forEach(({ month: monthKey, data }) => {
+  for (const { month: monthKey, data } of months) {
+    const apartment = await apartmentService.getMonth(year, monthKey);
     const summary = buildMonthSummary(year, monthKey, data, {
       savingsAccum,
       loansAccum,
+      apartment,
     });
     savingsAccum = summary.poupanca.saldo_acumulado;
     loansAccum = summary.emprestimos.saldo_acumulado;
@@ -166,7 +175,7 @@ async function getMonthSummary(year, month) {
     if (monthKey === normalizedMonth) {
       result = summary;
     }
-  });
+  }
 
   return result;
 }
@@ -178,15 +187,18 @@ async function getYearSummary(year) {
   let savingsAccum = 0;
   let loansAccum = 0;
 
-  const monthly = months.map(({ month, data }) => {
+  const monthly = [];
+  for (const { month, data } of months) {
+    const apartment = await apartmentService.getMonth(year, month);
     const summary = buildMonthSummary(year, month, data, {
       savingsAccum,
       loansAccum,
+      apartment,
     });
     savingsAccum = summary.poupanca.saldo_acumulado;
     loansAccum = summary.emprestimos.saldo_acumulado;
-    return summary;
-  });
+    monthly.push(summary);
+  }
 
   const totals = monthly.reduce(
     (acc, item) => {
@@ -210,6 +222,29 @@ async function getYearSummary(year) {
       acc.poupanca.resgates += item.poupanca.resgates;
       acc.emprestimos.feitos += item.emprestimos.feitos;
       acc.emprestimos.recebidos += item.emprestimos.recebidos;
+      if (item.apartamento.financiamento_caixa) {
+        acc.apartamento.parcelas.caixa +=
+          item.apartamento.financiamento_caixa.valor_parcela;
+        if (item.apartamento.financiamento_caixa.saldo_devedor !== null) {
+          acc.apartamento.saldo_devedor_final.caixa =
+            item.apartamento.financiamento_caixa.saldo_devedor;
+        }
+      }
+      if (item.apartamento.entrada_construtora) {
+        acc.apartamento.parcelas.construtora +=
+          item.apartamento.entrada_construtora.valor_parcela;
+        if (item.apartamento.entrada_construtora.saldo_devedor !== null) {
+          acc.apartamento.saldo_devedor_final.construtora =
+            item.apartamento.entrada_construtora.saldo_devedor;
+        }
+      }
+      if (item.apartamento.totais) {
+        acc.apartamento.parcelas.total += item.apartamento.totais.parcelas;
+        if (item.apartamento.totais.saldo_devedor !== null) {
+          acc.apartamento.saldo_devedor_final.total =
+            item.apartamento.totais.saldo_devedor;
+        }
+      }
       return acc;
     },
     {
@@ -224,6 +259,10 @@ async function getYearSummary(year) {
       },
       poupanca: { aportes: 0, resgates: 0 },
       emprestimos: { feitos: 0, recebidos: 0 },
+      apartamento: {
+        parcelas: { caixa: 0, construtora: 0, total: 0 },
+        saldo_devedor_final: { caixa: null, construtora: null, total: null },
+      },
     }
   );
 
@@ -261,6 +300,20 @@ async function getYearSummary(year) {
         feitos: Number(totals.emprestimos.feitos.toFixed(2)),
         recebidos: Number(totals.emprestimos.recebidos.toFixed(2)),
         saldo_final: Number(loansAccum.toFixed(2)),
+      },
+      apartamento: {
+        parcelas: {
+          caixa: Number(totals.apartamento.parcelas.caixa.toFixed(2)),
+          construtora: Number(
+            totals.apartamento.parcelas.construtora.toFixed(2)
+          ),
+          total: Number(totals.apartamento.parcelas.total.toFixed(2)),
+        },
+        saldo_devedor_final: {
+          caixa: totals.apartamento.saldo_devedor_final.caixa,
+          construtora: totals.apartamento.saldo_devedor_final.construtora,
+          total: totals.apartamento.saldo_devedor_final.total,
+        },
       },
     },
     medias: {

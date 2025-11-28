@@ -31,6 +31,9 @@ Health check: `GET /health`.
 - `PUT /months/:year/:month/recurrents/:period/:recurringId` - atualiza recorrente.
 - `DELETE /months/:year/:month/recurrents/:period/:recurringId` - remove recorrente.
 - `GET /years/:year/summary` - resumo anual agregado (salarios, variaveis, poupanca, emprestimos).
+- `PUT /apartment/:year/:month` - define parcelas do financiamento (Caixa/Construtora) e saldo devedor do mes.
+- `GET /apartment/:year/:month` - retorna snapshot do mes (parcelas, diferencas vs mes anterior e totais).
+- `GET /apartment/evolution` - serie ordenada para graficos com Caixa, Construtora e linha combinada (aceita `?year=YYYY`).
 - Flags opcionais:
   - `?generateFuture=true` em `POST /entries` cria automaticamente as demais parcelas futuras baseadas em `parcela` (`n/m`).
   - `?generateFuture=true` em `POST /recurrents` gera meses futuros ate `recorrencia.termina_em`.

@@ -24,6 +24,10 @@
         }
       }
     }
+  },
+  "apartamento": {
+    "financiamento_caixa": [ ... ],
+    "entrada_construtora": [ ... ]
   }
 }
 ```
@@ -112,12 +116,26 @@ Notas:
   - `variaveis` (entradas, saidas, saldo) e `recorrentes.pre_fatura|pos_fatura` (totais).
   - `resultado` (receitas, despesas, liquido calculado, `saldo_disponivel = liquido - poupanca.saldo_mes + emprestimos.saldo_mes`).
   - `poupanca` (aportes, resgates, saldo_mes, saldo_acumulado) e `emprestimos` (feitos, recebidos, saldo_mes, saldo_acumulado).
-- `GET /api/years/:year/summary` agrega todos os meses do ano, trazendo `totais`, `medias` (liquido, saldo_disponivel) e a lista de `meses` com os resumos mensais.
+  - `apartamento` (parcelas da Caixa/Construtora, diferenca vs mes anterior, saldo_devedor e totais do mes).
+- `GET /api/years/:year/summary` agrega todos os meses do ano, trazendo `totais`, `medias` (liquido, saldo_disponivel) e a lista de `meses` com os resumos mensais, incluindo totais de parcelas e ultimo saldo_devedor do modulo apartamento.
 
-## Apartamento (futuro)
-- `financiamento_caixa`: [{ `ano`, `mes`, `valor_parcela`, `diferenca_vs_mes_anterior` }].
-- `entrada_construtora`: [{ `ano`, `mes`, `valor_parcela`, `diferenca_vs_mes_anterior` }].
-- Opcional `saldo_devedor` e historico para grafico de evolucao.
+## Apartamento (parcelas e saldo devedor)
+Dados consolidados na raiz do arquivo:
+- `apartamento.financiamento_caixa`: lista de parcelas do financiamento da Caixa.
+- `apartamento.entrada_construtora`: lista de parcelas da Construtora/entrada.
+- Itens seguem o formato:
+```json
+{
+  "ano": "2025",
+  "mes": "01",
+  "valor_parcela": 1800.0,
+  "saldo_devedor": 190000.0
+}
+```
+Notas:
+- A API normaliza `ano`/`mes` para `YYYY`/`MM`, exige `valor_parcela` > 0 e aceita `saldo_devedor` opcional (>= 0 ou null).
+- As respostas trazem campos derivados `diferenca_vs_mes_anterior` e `saldo_devedor_variacao` calculados a partir do registro anterior da mesma serie.
+- `/api/apartment/:year/:month` retorna a foto do mes com `totais.parcelas` e `totais.saldo_devedor` somando Caixa + Construtora; `/api/apartment/evolution` retorna as series ordenadas e uma `combinada` para graficos.
 
 ## Exemplo minimo de mes
 ```json
