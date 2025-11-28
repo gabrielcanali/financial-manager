@@ -1,15 +1,19 @@
 # financial-manager
 
-API e planejamentos para um painel financeiro local usando JSON como armazenamento.
+API, cliente web e planejamentos para um painel financeiro local usando JSON como armazenamento.
 
-## Como rodar o backend
+## Como rodar backend + cliente
 
 ```bash
 cd server
 npm install
 npm run dev   # ou npm start
-# npm test    # executa testes de unidade
 ```
+
+- A API sobe em `http://localhost:3000/api`.
+- O cliente SPA (Vue via CDN) e servido estaticamente em `http://localhost:3000/` pelo mesmo servidor (recarregar a pagina apos subir o backend).
+- `npm test` roda os testes de unidade do backend.
+
 
 Variaveis:
 - `PORT` (opcional): porta do servidor.
@@ -38,6 +42,10 @@ Health check: `GET /health`.
   - `?generateFuture=true` em `POST /entries` cria automaticamente as demais parcelas futuras baseadas em `parcela` (`n/m`).
   - `?generateFuture=true` em `POST /recurrents` gera meses futuros ate `recorrencia.termina_em`.
   - `?cascade=true` em `PUT /entries` ou `PUT /recurrents` aplica a alteracao para toda a serie (parcelas/recorrencias restantes).
+- Admin e operacao:
+  - `GET /admin/export` - devolve o JSON completo atual.
+  - `POST /admin/import` - sobrescreve o JSON com o corpo enviado.
+  - `POST /admin/backup` - grava um arquivo de backup em `data/backups/financeiro-<timestamp>.json`.
 
 Formato de datas: ISO `YYYY-MM-DD`. Valores numericos (positivo=entrada, negativo=saida).
 

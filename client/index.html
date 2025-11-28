@@ -1,51 +1,1083 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="./assets/css/index.css"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Manager - Cliente Web</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0f172a;
+      --panel: #0c1224;
+      --muted: #9fb1d0;
+      --primary: #5eead4;
+      --secondary: #93c5fd;
+      --danger: #f87171;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --border: rgba(255, 255, 255, 0.08);
+      --card: rgba(255, 255, 255, 0.03);
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(94, 234, 212, 0.08), transparent 30%),
+                  radial-gradient(circle at 80% 0%, rgba(147, 197, 253, 0.12), transparent 35%),
+                  linear-gradient(135deg, #0b1224, #0f172a 60%, #0b1224);
+      color: #e5e7eb;
+      min-height: 100vh;
+    }
+
+    #app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    header.topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 16px;
+      backdrop-filter: blur(10px);
+      z-index: 2;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+
+    .brand-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 0 10px rgba(94, 234, 212, 0.8);
+    }
+
+    .brand-sub {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button,
+    .import-label {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: #e5e7eb;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      transition: transform 0.1s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover,
+    .import-label:hover {
+      transform: translateY(-1px);
+      border-color: rgba(94, 234, 212, 0.4);
+      box-shadow: 0 10px 24px rgba(94, 234, 212, 0.12);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .import-label {
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .import-label input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    main {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .field input,
+    .field select {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: #e5e7eb;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      outline: none;
+    }
+
+    .chips {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .chip.active {
+      background: rgba(94, 234, 212, 0.12);
+      color: var(--primary);
+      border-color: rgba(94, 234, 212, 0.4);
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      letter-spacing: 0.3px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .metric {
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.02), rgba(94, 234, 212, 0.03));
+    }
+
+    .metric .label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .metric .value {
+      margin-top: 6px;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: #e5e7eb;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      color: #0f172a;
+    }
+
+    .badge.success { background: var(--success); }
+    .badge.warn { background: var(--warning); }
+    .badge.danger { background: var(--danger); color: #0b1224; }
+
+    .tagline {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 6px 0;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .chart {
+      width: 100%;
+      height: 160px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .highlight {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    footer {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    @media (max-width: 640px) {
+      #app {
+        padding: 14px;
+      }
+      header.topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="main">
-        <div class="form-header py-4 border-bottom border-secondary">
-            <div class="d-flex justify-content-between">
-                <div class="px-1 w-100">
-                    <label for="valueInput">Valor</label>
-                    <input type="value" class="form-control" id="valueInput" placeholder="R$ 0,00">
-                </div>
-                <div class="px-1 w-25">
-                    <label for="valueType">Tipo</label>
-                    <select class="form-select" id="valueType">
-                        <option value="plus" selected>+</option>
-                        <option value="minus">-</option>
-                    </select>
-                </div>
-                <div class="px-1 align-self-end">
-                    <button type="button" class="btn btn-primary" id="valueSubmit"><i class="bi bi-plus"></i></button>
-                </div>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-title">
+          <div class="brand-dot"></div>
+          <div>Financial Manager</div>
+        </div>
+        <div class="brand-sub">SPA Vue - API local em /api</div>
+      </div>
+      <div class="actions">
+        <button @click="refreshAll" :disabled="loading">Recarregar</button>
+        <label class="import-label">
+          <span>Importar JSON</span>
+          <input type="file" accept="application/json" @change="handleImport">
+        </label>
+        <button @click="exportData" :disabled="loading || !monthsAvailable.length">Exportar snapshot</button>
+        <button @click="exportFromApi" :disabled="loading || adminLoading">Exportar via API</button>
+        <button @click="backupServer" :disabled="loading || adminLoading">Backup no servidor</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel">
+        <div class="controls">
+          <div class="field">
+            <label>Ano</label>
+            <input type="text" v-model="year" maxlength="4" @change="onYearChange">
+          </div>
+          <div class="field">
+            <label>Mes</label>
+            <select v-model="month" @change="onMonthChange">
+              <option v-for="m in selectableMonths" :key="m" :value="m">
+                {{ m }}
+              </option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <div class="status-row">
+              <span class="badge success" v-if="!loading && !error">OK</span>
+              <span class="badge warn" v-if="loading">Sincronizando...</span>
+              <span class="badge danger" v-if="error">Erro</span>
+              <span class="tagline" v-if="message">{{ message }}</span>
             </div>
+          </div>
         </div>
-        <div class="values-list border-bottom border-secondary">
-            <div class="container text-center">
-                <div class="row py-1">
-                    <div class="col border-end border-secondary-subtle" id="listPlus">
-                        <div class="py-2 fs-4 text-success">+</div>
-                    </div>
-                    <div class="col" id="listMinus">
-                        <div class="py-2 fs-4 text-danger">-</div>
-                    </div>
-                </div>
+        <div class="chips" v-if="monthsAvailable.length">
+          <div class="chip" v-for="m in monthsAvailable" :key="m" :class="{ active: m === month }">
+            {{ year }}-{{ m }}
+          </div>
+        </div>
+        <div class="muted" v-else>Nenhum mes encontrado para {{ year }}.</div>
+      </section>
+
+      <section class="grid two">
+        <div class="card">
+          <div class="section-title">
+            <h3>Resumo do mes {{ year }}-{{ month }}</h3>
+            <span class="pill" v-if="monthSummary">Calendario: {{ (monthData?.calendario?.pagamentos || []).length }} pagamentos</span>
+          </div>
+          <div class="metrics">
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--secondary)"></span>Receitas</div>
+              <div class="value">{{ formatCurrency(monthSummary?.resultado?.receitas || 0) }}</div>
             </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--danger)"></span>Despesas</div>
+              <div class="value">{{ formatCurrency(monthSummary?.resultado?.despesas || 0) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--primary)"></span>Liquido</div>
+              <div class="value">{{ formatCurrency(monthSummary?.resultado?.liquido || 0) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--warning)"></span>Saldo disponivel</div>
+              <div class="value">{{ formatCurrency(monthSummary?.resultado?.saldo_disponivel || 0) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--primary)"></span>Poupanca (acumulado)</div>
+              <div class="value">{{ formatCurrency(monthSummary?.poupanca?.saldo_acumulado || 0) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--secondary)"></span>Emprestimos (acumulado)</div>
+              <div class="value">{{ formatCurrency(monthSummary?.emprestimos?.saldo_acumulado || 0) }}</div>
+            </div>
+          </div>
         </div>
-        <div class="py-4 fs-1 text-center">
-            <span id="valueTotal"></span>
+
+        <div class="card">
+          <div class="section-title">
+            <h3>Calendario e salarios</h3>
+            <span class="pill">{{ (monthData?.calendario?.pagamentos || []).length }} datas de pagamento</span>
+          </div>
+          <div class="metrics">
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--primary)"></span>Adiantamento</div>
+              <div class="value">{{ formatCurrency(monthSummary?.salarios?.adiantamento || 0) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--secondary)"></span>Pagamento</div>
+              <div class="value">{{ formatCurrency(monthSummary?.salarios?.pagamento || 0) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--warning)"></span>Bruto</div>
+              <div class="value">{{ formatCurrency(monthSummary?.salarios?.bruto || 0) }}</div>
+            </div>
+          </div>
+          <div class="chips" style="margin-top: 10px;">
+            <div class="chip" v-for="date in monthData?.calendario?.pagamentos || []" :key="date">Pagamento {{ date }}</div>
+            <div class="chip" v-if="monthData?.calendario?.fechamento_fatura">Fechamento {{ monthData.calendario.fechamento_fatura }}</div>
+            <div class="muted" v-if="!(monthData?.calendario?.pagamentos || []).length && !monthData?.calendario?.fechamento_fatura">Sem datas para este mes.</div>
+          </div>
         </div>
-    </div>
-    <script src="./assets/js/libs/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-    <script src="./assets/js/index.js"></script>
+      </section>
+
+      <section class="grid two">
+        <div class="card">
+          <div class="section-title">
+            <h3>Entradas e saidas</h3>
+            <span class="pill" v-if="monthData">Total: {{ formatCurrency(sumList(monthData.entradas_saidas)) }}</span>
+          </div>
+          <div v-if="(monthData?.entradas_saidas || []).length">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descricao</th>
+                  <th>Valor</th>
+                  <th>Parcela</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in monthData.entradas_saidas" :key="item.id || item.descricao + item.data">
+                  <td>{{ item.data }}</td>
+                  <td>{{ item.descricao }}</td>
+                  <td :style="{ color: item.valor >= 0 ? '#5eead4' : '#f87171' }">{{ formatCurrency(item.valor) }}</td>
+                  <td>{{ item.parcela || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="empty" v-else>Sem movimentacoes variaveis.</div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">
+            <h3>Recorrentes</h3>
+            <span class="pill">Pre: {{ (monthData?.contas_recorrentes_pre_fatura || []).length }} | Pos: {{ (monthData?.contas_recorrentes_pos_fatura || []).length }}</span>
+          </div>
+          <div class="grid two">
+            <div>
+              <h4 class="muted">Ate fechamento</h4>
+              <table v-if="(monthData?.contas_recorrentes_pre_fatura || []).length">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Descricao</th>
+                    <th>Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in monthData.contas_recorrentes_pre_fatura" :key="item.id || item.descricao + item.data">
+                    <td>{{ item.data }}</td>
+                    <td>{{ item.descricao }}</td>
+                    <td :style="{ color: item.valor >= 0 ? '#5eead4' : '#f87171' }">{{ formatCurrency(item.valor) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="empty" v-else>Sem contas antes do fechamento.</div>
+            </div>
+            <div>
+              <h4 class="muted">Apos fechamento</h4>
+              <table v-if="(monthData?.contas_recorrentes_pos_fatura || []).length">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Descricao</th>
+                    <th>Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in monthData.contas_recorrentes_pos_fatura" :key="item.id || item.descricao + item.data">
+                    <td>{{ item.data }}</td>
+                    <td>{{ item.descricao }}</td>
+                    <td :style="{ color: item.valor >= 0 ? '#5eead4' : '#f87171' }">{{ formatCurrency(item.valor) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="empty" v-else>Sem contas apos o fechamento.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid two">
+        <div class="card">
+          <div class="section-title">
+            <h3>Poupanca</h3>
+            <span class="pill">Movimentos: {{ (monthData?.poupanca?.movimentos || []).length }}</span>
+          </div>
+          <div class="metrics">
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--primary)"></span>Aportes</div>
+              <div class="value">{{ formatCurrency(monthSummary?.poupanca?.aportes || 0) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--danger)"></span>Resgates</div>
+              <div class="value">{{ formatCurrency(monthSummary?.poupanca?.resgates || 0) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--secondary)"></span>Saldo no mes</div>
+              <div class="value">{{ formatCurrency(monthSummary?.poupanca?.saldo_mes || 0) }}</div>
+            </div>
+          </div>
+          <div v-if="(monthData?.poupanca?.movimentos || []).length">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descricao</th>
+                  <th>Valor</th>
+                  <th>Tipo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in monthData.poupanca.movimentos" :key="item.id || item.descricao + item.data">
+                  <td>{{ item.data }}</td>
+                  <td>{{ item.descricao }}</td>
+                  <td :style="{ color: item.tipo === 'aporte' ? '#5eead4' : '#f87171' }">{{ formatCurrency(item.valor) }}</td>
+                  <td>{{ item.tipo }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="empty" v-else>Sem movimentos de poupanca.</div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">
+            <h3>Emprestimos</h3>
+            <span class="pill">Feitos: {{ (monthData?.emprestimos?.feitos || []).length }} | Recebidos: {{ (monthData?.emprestimos?.recebidos || []).length }}</span>
+          </div>
+          <div class="metrics">
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--danger)"></span>Feitos</div>
+              <div class="value">{{ formatCurrency(monthSummary?.emprestimos?.feitos || 0) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--primary)"></span>Recebidos</div>
+              <div class="value">{{ formatCurrency(monthSummary?.emprestimos?.recebidos || 0) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--secondary)"></span>Saldo no mes</div>
+              <div class="value">{{ formatCurrency(monthSummary?.emprestimos?.saldo_mes || 0) }}</div>
+            </div>
+          </div>
+          <div class="grid two">
+            <div>
+              <h4 class="muted">Feitos</h4>
+              <table v-if="(monthData?.emprestimos?.feitos || []).length">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Descricao</th>
+                    <th>Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in monthData.emprestimos.feitos" :key="item.id || item.descricao + item.data">
+                    <td>{{ item.data }}</td>
+                    <td>{{ item.descricao }}</td>
+                    <td :style="{ color: '#f87171' }">{{ formatCurrency(item.valor) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="empty" v-else>Nenhum emprestimo feito.</div>
+            </div>
+            <div>
+              <h4 class="muted">Recebidos</h4>
+              <table v-if="(monthData?.emprestimos?.recebidos || []).length">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Descricao</th>
+                    <th>Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in monthData.emprestimos.recebidos" :key="item.id || item.descricao + item.data">
+                    <td>{{ item.data }}</td>
+                    <td>{{ item.descricao }}</td>
+                    <td :style="{ color: '#5eead4' }">{{ formatCurrency(item.valor) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="empty" v-else>Nenhum emprestimo recebido.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid two">
+        <div class="card">
+          <div class="section-title">
+            <h3>Modulo apartamento</h3>
+            <span class="pill" v-if="monthSummary?.apartamento?.totais">Total parcelas: {{ formatCurrency(monthSummary.apartamento.totais.parcelas) }}</span>
+          </div>
+          <div v-if="monthSummary?.apartamento && (monthSummary.apartamento.financiamento_caixa || monthSummary.apartamento.entrada_construtora)">
+            <div class="metrics">
+              <div class="metric">
+                <div class="label"><span class="dot" style="background: var(--primary)"></span>Caixa</div>
+                <div class="value">{{ formatCurrency(monthSummary.apartamento.financiamento_caixa?.valor_parcela || 0) }}</div>
+                <div class="muted">Saldo devedor: {{ formatCurrency(monthSummary.apartamento.financiamento_caixa?.saldo_devedor ?? 0) }}</div>
+              </div>
+              <div class="metric">
+                <div class="label"><span class="dot" style="background: var(--secondary)"></span>Construtora</div>
+                <div class="value">{{ formatCurrency(monthSummary.apartamento.entrada_construtora?.valor_parcela || 0) }}</div>
+                <div class="muted">Saldo devedor: {{ formatCurrency(monthSummary.apartamento.entrada_construtora?.saldo_devedor ?? 0) }}</div>
+              </div>
+              <div class="metric" v-if="monthSummary.apartamento.totais">
+                <div class="label"><span class="dot" style="background: var(--warning)"></span>Total</div>
+                <div class="value">{{ formatCurrency(monthSummary.apartamento.totais.parcelas) }}</div>
+                <div class="muted">Saldo total: {{ monthSummary.apartamento.totais.saldo_devedor === null ? '-' : formatCurrency(monthSummary.apartamento.totais.saldo_devedor) }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="empty" v-else>Nenhum dado de apartamento para {{ year }}-{{ month }}.</div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">
+            <h3>Evolucao (parcelas combinadas)</h3>
+            <span class="pill" v-if="apartmentEvolution?.combinada?.length">{{ apartmentEvolution.combinada.length }} pontos</span>
+          </div>
+          <div class="chart" v-if="apartmentChart.points">
+            <svg viewBox="0 0 400 160">
+              <polyline :points="apartmentChart.points" fill="none" stroke="url(#grad)" stroke-width="3" />
+              <defs>
+                <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#5eead4" />
+                  <stop offset="100%" stop-color="#93c5fd" />
+                </linearGradient>
+              </defs>
+              <template v-for="(label, idx) in apartmentChart.labels">
+                <circle :cx="label.x" :cy="label.y" r="3" fill="#5eead4" :key="idx + '-dot'"></circle>
+              </template>
+            </svg>
+          </div>
+          <div class="empty" v-else>Sem serie de evolucao para o ano selecionado.</div>
+          <div class="legend" v-if="apartmentChart.labels.length">
+            <span v-for="(label, idx) in apartmentChart.labels" :key="idx + '-legend'">
+              <span class="dot" :style="{ background: '#5eead4' }"></span>
+              {{ label.ref }} (R$ {{ label.value }})
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-title">
+          <h3>Resumo anual {{ year }}</h3>
+          <span class="pill" v-if="yearSummary">{{ (yearSummary?.meses?.length || 0) }} meses carregados</span>
+        </div>
+        <div v-if="yearSummary">
+          <div class="metrics">
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--primary)"></span>Liquido total</div>
+              <div class="value">{{ formatCurrency(yearSummary.totais.resultado.liquido) }}</div>
+              <div class="muted">Media: {{ formatCurrency(yearSummary.medias.liquido) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--secondary)"></span>Saldo disponivel</div>
+              <div class="value">{{ formatCurrency(yearSummary.totais.resultado.saldo_disponivel) }}</div>
+              <div class="muted">Media: {{ formatCurrency(yearSummary.medias.saldo_disponivel) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--warning)"></span>Poupanca final</div>
+              <div class="value">{{ formatCurrency(yearSummary.totais.poupanca.saldo_final) }}</div>
+            </div>
+            <div class="metric">
+              <div class="label"><span class="dot" style="background: var(--danger)"></span>Emprestimos finais</div>
+              <div class="value">{{ formatCurrency(yearSummary.totais.emprestimos.saldo_final) }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="empty" v-else>Carregue um ano para ver o painel anual.</div>
+      </section>
+
+      <section class="grid two">
+        <div class="card">
+          <div class="section-title">
+            <h3>Importacao</h3>
+            <span class="pill">Local</span>
+          </div>
+          <div v-if="importFeedback">
+            <div :class="['badge', importFeedback.ok ? 'success' : 'danger']">{{ importFeedback.ok ? 'JSON validado' : 'Falha ao ler' }}</div>
+            <div class="muted" style="margin-top: 6px;">{{ importFeedback.message }}</div>
+            <button v-if="importFeedback.ok" style="margin-top: 10px;" @click="sendImportToApi" :disabled="adminLoading">Enviar para API (sobrescreve JSON)</button>
+          </div>
+          <div class="muted" v-else>Selecione um arquivo .json para validar e inspecionar. Importacao para a API esta disponivel apos ler o arquivo.</div>
+        </div>
+        <div class="card">
+          <div class="section-title">
+            <h3>Notas rapidas</h3>
+          </div>
+          <ul class="muted">
+            <li>SPA usa Vue direto do CDN e consome as rotas em <code>/api</code>.</li>
+            <li>Controle de ano/mes faz fetch das rotas <code>/years/:year/summary</code> e <code>/months/:year/:month</code>.</li>
+            <li>Botao de exportacao baixa um snapshot com meses carregados e resumo anual.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer>Financial Manager - Cliente web + operacao</footer>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script type="module">
+    const { createApp } = Vue;
+    const API_BASE = "/api";
+
+    createApp({
+      data() {
+        return {
+          year: "2025",
+          month: "01",
+          monthsAvailable: [],
+          yearSummary: null,
+          monthSummary: null,
+          monthData: null,
+          apartmentEvolution: null,
+          loading: false,
+          adminLoading: false,
+          error: "",
+          message: "Carregando dados iniciais...",
+          importFeedback: null,
+          importPayload: null,
+        };
+      },
+      computed: {
+        selectableMonths() {
+          if (this.monthsAvailable.length) return this.monthsAvailable;
+          return Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
+        },
+        apartmentChart() {
+          const serie = this.apartmentEvolution?.combinada || [];
+          if (!serie.length) return { points: "", labels: [] };
+
+          const maxValue = Math.max(...serie.map((item) => item.parcelas), 1);
+          const width = 400;
+          const height = 150;
+          const padding = 12;
+          const step = serie.length === 1 ? 0 : (width - padding * 2) / (serie.length - 1);
+
+          const points = serie
+            .map((item, idx) => {
+              const x = padding + idx * step;
+              const y = height - padding - (item.parcelas / maxValue) * (height - padding * 2);
+              return `${x},${y}`;
+            })
+            .join(" ");
+
+          const labels = serie.map((item, idx) => {
+            const x = padding + idx * step;
+            const y = height - padding - (item.parcelas / maxValue) * (height - padding * 2);
+            return { x, y, ref: item.referencia, value: item.parcelas };
+          });
+
+          return { points, labels };
+        },
+      },
+      methods: {
+        formatCurrency(value) {
+          const safe = Number(value || 0);
+          return new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+            maximumFractionDigits: 2,
+          }).format(safe);
+        },
+        sumList(list = []) {
+          return list.reduce((acc, item) => acc + Number(item.valor || 0), 0);
+        },
+        async apiGet(path) {
+          const res = await fetch(`${API_BASE}${path}`);
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            const msg = body.error || (body.errors ? body.errors.join(", ") : res.statusText);
+            throw new Error(msg || "Falha ao consultar API");
+          }
+          return res.json();
+        },
+        async apiPost(path, body) {
+          const res = await fetch(`${API_BASE}${path}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          if (!res.ok) {
+            const payload = await res.json().catch(() => ({}));
+            const msg = payload.error || (payload.errors ? payload.errors.join(", ") : res.statusText);
+            throw new Error(msg || "Falha ao enviar para API");
+          }
+          return res.json();
+        },
+        async bootstrap() {
+          await this.loadYearSummary(this.year);
+        },
+        async loadYearSummary(year) {
+          this.loading = true;
+          this.error = "";
+          this.message = `Buscando resumo anual de ${year}...`;
+          try {
+            const summary = await this.apiGet(`/years/${year}/summary`);
+            this.yearSummary = summary;
+            this.monthsAvailable = summary.meses_disponiveis || [];
+            if (!this.monthsAvailable.includes(this.month)) {
+              this.month = this.monthsAvailable[0] || "01";
+            }
+            await this.loadMonth(this.month);
+            await this.loadApartmentEvolution();
+            this.message = "Painel atualizado";
+          } catch (err) {
+            this.error = err.message;
+            this.message = "Nao foi possivel carregar o ano informado.";
+          } finally {
+            this.loading = false;
+          }
+        },
+        async loadMonth(month) {
+          this.loading = true;
+          this.error = "";
+          this.message = `Carregando dados de ${this.year}-${month}...`;
+          try {
+            const [summary, data] = await Promise.all([
+              this.apiGet(`/months/${this.year}/${month}/summary`),
+              this.apiGet(`/months/${this.year}/${month}`),
+            ]);
+            this.monthSummary = summary;
+            this.monthData = data;
+            this.message = "Mes sincronizado";
+          } catch (err) {
+            this.error = err.message;
+            this.message = "Falha ao carregar o mes.";
+          } finally {
+            this.loading = false;
+          }
+        },
+        async loadApartmentEvolution() {
+          try {
+            this.apartmentEvolution = await this.apiGet(`/apartment/evolution?year=${this.year}`);
+          } catch (err) {
+            this.apartmentEvolution = { combinada: [] };
+            console.warn("Falha ao carregar evolucao do apartamento:", err.message);
+          }
+        },
+        async onYearChange() {
+          const normalized = String(this.year || "").padStart(4, "0").slice(-4);
+          this.year = normalized;
+          await this.loadYearSummary(this.year);
+        },
+        async onMonthChange() {
+          const normalized = String(this.month || "").padStart(2, "0").slice(-2);
+          this.month = normalized;
+          await this.loadMonth(this.month);
+        },
+        async refreshAll() {
+          await this.loadYearSummary(this.year);
+        },
+        async exportFromApi() {
+          try {
+            this.adminLoading = true;
+            this.message = "Exportando via API...";
+            const payload = await this.apiGet("/admin/export");
+            const blob = new Blob([JSON.stringify(payload.db, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `financeiro-export-${this.year}.json`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+            this.message = "Export concluido";
+          } catch (err) {
+            this.error = err.message;
+            this.message = "Falha ao exportar";
+          } finally {
+            this.adminLoading = false;
+          }
+        },
+        async backupServer() {
+          try {
+            this.adminLoading = true;
+            this.message = "Gerando backup no servidor...";
+            const result = await this.apiPost("/admin/backup", {});
+            this.message = `Backup criado em ${result.file}`;
+          } catch (err) {
+            this.error = err.message;
+            this.message = "Falha ao gerar backup";
+          } finally {
+            this.adminLoading = false;
+          }
+        },
+        async exportData() {
+          if (!this.monthsAvailable.length) return;
+          this.message = "Gerando snapshot...";
+          const monthsPayload = {};
+          for (const m of this.monthsAvailable) {
+            try {
+              monthsPayload[m] = await this.apiGet(`/months/${this.year}/${m}`);
+            } catch (err) {
+              monthsPayload[m] = { error: err.message };
+            }
+          }
+          const payload = {
+            exported_at: new Date().toISOString(),
+            year: this.year,
+            months: monthsPayload,
+            year_summary: this.yearSummary,
+            apartment_evolution: this.apartmentEvolution,
+          };
+          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `financial-manager-${this.year}.json`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+          this.message = "Snapshot exportado";
+        },
+        handleImport(event) {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const parsed = JSON.parse(reader.result);
+              const months = parsed?.months ? Object.keys(parsed.months).length : 0;
+              this.importPayload = parsed;
+              this.importFeedback = {
+                ok: true,
+                message: `Arquivo lido: ${months} meses e ano ${parsed.year || "?"}. Pronto para enviar ao backend.`,
+              };
+            } catch (err) {
+              this.importPayload = null;
+              this.importFeedback = {
+                ok: false,
+                message: "JSON invalido ou corrompido.",
+              };
+            }
+          };
+          reader.readAsText(file);
+        },
+        async sendImportToApi() {
+          if (!this.importPayload) return;
+          try {
+            this.adminLoading = true;
+            this.message = "Enviando JSON para API...";
+            await this.apiPost("/admin/import", this.importPayload);
+            this.message = "Import concluida. Recarregando painel...";
+            await this.refreshAll();
+          } catch (err) {
+            this.error = err.message;
+            this.message = "Falha ao importar JSON";
+          } finally {
+            this.adminLoading = false;
+          }
+        },
+      },
+      mounted() {
+        this.bootstrap();
+      },
+    }).mount("#app");
+  </script>
 </body>
 </html>

@@ -14,6 +14,10 @@ const DB_FILE = process.env.DB_FILE
   ? path.resolve(__dirname, "..", "..", process.env.DB_FILE)
   : DEFAULT_DB_FILE;
 
+function getDbFilePath() {
+  return DB_FILE;
+}
+
 async function read() {
   try {
     const content = await fs.readFile(DB_FILE, "utf-8");
@@ -33,4 +37,4 @@ async function write(data) {
   await fs.writeFile(DB_FILE, json, "utf-8");
 }
 
-export default { read, write };
+export default { read, write, getDbFilePath };
