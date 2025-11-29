@@ -1,0 +1,47 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+@layer base {
+  body {
+    @apply bg-ink text-slate-100 font-display antialiased;
+    background:
+      radial-gradient(circle at 12% 20%, rgba(94, 234, 212, 0.08), transparent 28%),
+      radial-gradient(circle at 85% 12%, rgba(147, 197, 253, 0.12), transparent 32%),
+      linear-gradient(130deg, #0b1224 0%, #0c1530 55%, #0a1223 100%);
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: rgba(94, 234, 212, 0.2);
+    color: #e2f5ef;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/5 border border-white/10 rounded-xl shadow-card backdrop-blur-xl;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-wide text-slate-200/80;
+  }
+
+  .muted {
+    @apply text-slate-400;
+  }
+
+  .tag {
+    @apply inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:-translate-y-[1px] hover:border-accent/50 hover:shadow-card active:translate-y-[0px] disabled:pointer-events-none disabled:opacity-60;
+  }
+}

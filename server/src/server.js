@@ -21,13 +21,13 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api", routes);
-app.use("/api/*", (req, res) => {
+app.use("/api", (req, res) => {
   res.status(404).json({ error: "Not found" });
 });
 
 // Serve cliente SPA estatico
 app.use(express.static(clientDir));
-app.get("*", (req, res) => {
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(clientDir, "index.html"));
 });
 
