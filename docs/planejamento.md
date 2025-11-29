@@ -11,12 +11,14 @@
 - Base JSON inicial em server/data/financeiro.json com estrutura atualizada (poupanca/emprestimos). Front refeito com stack Vite + Vue 3 + Tailwind + Pinia em `client/`, com dashboards mais ricos, proxy de dev para `/api`, CRUD completo (lancamentos, recorrentes, poupanca e emprestimos) e operacoes de admin centralizadas no store.
 - Modulo apartamento implementado com rotas `/api/apartment` para registrar parcelas Caixa/Construtora, calcular diferenca vs mes anterior, evolucao de saldo devedor e consolidar no resumo mensal/anual.
 - Servidor Express tambem serve o cliente estatico em `/`, mantendo API em `/api`. Endpoints de admin adicionados (`/admin/export`, `/admin/import`, `/admin/backup`) para operacao sobre o JSON.
+- Onboarding conectado: `/admin/status`, `/admin/validate` e `/admin/bootstrap` detectam ausencia de base, validam o JSON antes de importar e permitem criar um arquivo inicial com configuracoes (fechamento e adiantamento).
 
 ## Alinhamento com a ideia
 - Organizacao ano/mes, tabelas de entradas/saidas e recorrentes e os resumos mensal/anual (incluindo poupanca/emprestimos e apartamento) ja estao na API.
 - API cobre fluxo financeiro, apartamento e operacoes de export/import/backup; UI basica entregue com navegacao ano/mes e dashboards mensais/anuais.
 - Ainda faltam refinamentos visuais/feedbacks da SPA e um ciclo de build/teste integrado (lint, etc.).
 - Validacoes iniciais de datas/parcelas/limites estao presentes; rotinas de admin agora expostas e precisam de hardening/monitoracao futura.
+- Onboarding do front cobre o caso sem JSON, validando o arquivo local antes do import e permitindo bootstrap de base com configuracao inicial.
 
 
 ## Sintese da ideia V2 (Front e onboarding)
@@ -56,15 +58,15 @@
 - SPA consumindo novas rotas de admin (exportar, backup e importar arquivo lido).
 
 ## Priorizacao atual
-- Fase 9 (Front V2 e onboarding) e a proxima entrega para destravar uso sem JSON e reorganizar o front.
-- Fase 8 (Iteracao de qualidade) fica na sequencia, focada em hardening e feedbacks do front e admin.
+- Fase 8 (Iteracao de qualidade) passa a ser a proxima entrega, focando em build/lint, proxy/servido de dist e hardening dos endpoints/admin.
+- Fase 9 (Front V2) segue em andamento para consolidar rotas/sidebar, dashboard V2 e telas visuais apos estabilizar o onboarding e configuracoes iniciais.
 
 ## Roteiro da ideia V2 (Front V2 - Fase 9 priorizada)
-1) Onboarding e checagem de base (prioritario)
-- Detectar ausencia de JSON e exibir tela de boas vindas com importacao ou criacao; validar JSON importado (schema + erros claros) antes de carregar.
-- Criar base nova com defaults (ano/mes atual, salario zerado, recorrentes vazios) e iniciar carregamento/estado no store.
+1) Onboarding e checagem de base (entregue)
+- Detectar ausencia de JSON e exibir tela de boas vindas com importacao ou criacao; validar JSON importado (schema + erros claros) antes de carregar via `/admin/validate`.
+- Criar base nova com defaults (ano/mes atual, salario zerado, recorrentes vazios) e iniciar carregamento/estado no store com `/admin/bootstrap`.
 
-2) Configuracoes iniciais e persistencia (prioritario)
+2) Configuracoes iniciais e persistencia (entregue)
 - Coletar data de fechamento da fatura e parametros de adiantamento (flag, dia, percentual) com validacao de ranges.
 - Persistir configuracoes no JSON e no store, expondo via API/admin; ajustar import/export/backup para incluir e restaurar o bloco de configuracao.
 

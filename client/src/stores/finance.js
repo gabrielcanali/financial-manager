@@ -28,6 +28,9 @@ export const useFinanceStore = defineStore("finance", {
     monthSummary: null,
     monthData: null,
     apartmentEvolution: null,
+    config: null,
+    hasBase: true,
+    statusLoaded: false,
     loading: false,
     adminLoading: false,
     message: "Inicializando painel",
@@ -53,15 +56,46 @@ export const useFinanceStore = defineStore("finance", {
       this.month = normalizeMonth(month);
     },
     async bootstrap() {
-      await this.fetchYearSummary(this.year);
+      this.loading = true;
+      this.error = "";
+      this.message = "Checando base e status...";
+      try {
+        const status = await this.api("/admin/status");
+        this.statusLoaded = true;
+        this.hasBase = !!status.has_data;
+        this.config = status.config || null;
+
+        if (!this.hasBase) {
+          this.monthsAvailable = [];
+          this.yearSummary = null;
+          this.monthSummary = null;
+          this.monthData = null;
+          this.apartmentEvolution = { combinada: [] };
+          this.message =
+            "Nenhum JSON carregado. Importe um arquivo ou crie uma nova base.";
+          return;
+        }
+
+        if (status.last_year) this.year = status.last_year;
+        if (status.last_month) this.month = status.last_month;
+        await this.fetchYearSummary(this.year);
+      } catch (err) {
+        this.error = err.message;
+        this.message = "Erro ao iniciar painel";
+      } finally {
+        this.statusLoaded = true;
+        this.loading = false;
+      }
     },
     async api(path, { method = "GET", body, headers } = {}) {
+      const computedHeaders = { ...(headers || {}) };
+      if (body) {
+        computedHeaders["Content-Type"] = "application/json";
+      }
+
       const res = await fetch(`${API_BASE}${path}`, {
         method,
-        headers: {
-          "Content-Type": body ? "application/json" : undefined,
-          ...headers,
-        },
+        headers: computedHeaders,
         body: body ? JSON.stringify(body) : undefined,
       });
 
@@ -71,11 +105,17 @@ export const useFinanceStore = defineStore("finance", {
         const msg =
           payload?.error ||
           (payload?.errors ? payload.errors.join(", ") : res.statusText);
-        throw new Error(msg || "Falha ao comunicar com a API");
+        const error = new Error(msg || "Falha ao comunicar com a API");
+        error.status = res.status;
+        error.payload = payload;
+        throw error;
       }
       return payload;
     },
     async fetchYearSummary(year = this.year) {
+      if (!this.hasBase) {
+        return;
+      }
       this.loading = true;
       this.error = "";
       this.message = `Carregando resumo anual ${year}...`;
@@ -97,6 +137,9 @@ export const useFinanceStore = defineStore("finance", {
       }
     },
     async fetchMonth(month = this.month) {
+      if (!this.hasBase) {
+        return;
+      }
       this.loading = true;
       this.error = "";
       this.message = `Sincronizando ${this.year}-${month}...`;
@@ -125,7 +168,34 @@ export const useFinanceStore = defineStore("finance", {
       }
     },
     async refreshAll() {
+      if (!this.statusLoaded || !this.hasBase) {
+        await this.bootstrap();
+        return;
+      }
       await this.fetchYearSummary(this.year);
+    },
+    async createBase(config) {
+      this.adminLoading = true;
+      this.error = "";
+      this.message = "Criando base inicial...";
+      try {
+        const result = await this.api("/admin/bootstrap", {
+          method: "POST",
+          body: { config },
+        });
+        this.hasBase = true;
+        this.config = result.config || null;
+        this.year = result.year;
+        this.month = result.month;
+        await this.fetchYearSummary(this.year);
+        this.message = "Base criada com sucesso";
+      } catch (err) {
+        this.error = err.message;
+        this.message = "Falha ao criar base";
+        throw err;
+      } finally {
+        this.adminLoading = false;
+      }
     },
     async createEntry(payload, { generateFuture = false } = {}) {
       const query = generateFuture ? "?generateFuture=true" : "";
@@ -188,7 +258,7 @@ export const useFinanceStore = defineStore("finance", {
       await this.fetchMonth();
     },
     async exportSnapshot() {
-      if (!this.monthsAvailable.length) return;
+      if (!this.hasBase || !this.monthsAvailable.length) return;
       const monthsPayload = {};
       for (const m of this.monthsAvailable) {
         monthsPayload[m] = await this.api(`/months/${this.year}/${m}`).catch(
@@ -234,22 +304,47 @@ export const useFinanceStore = defineStore("finance", {
         this.adminLoading = false;
       }
     },
-    async parseImportFile(file) {
-      const text = await file.text();
+    async validateImportPayload(payload) {
+      this.adminLoading = true;
+      this.error = "";
       try {
-        const parsed = JSON.parse(text);
-        const months = parsed?.months ? Object.keys(parsed.months).length : 0;
-        this.importPayload = parsed;
+        const result = await this.api("/admin/validate", {
+          method: "POST",
+          body: payload,
+        });
+        this.importPayload = result.normalized ?? payload;
         this.importFeedback = {
           ok: true,
-          message: `Arquivo lido (${months} meses / ano ${parsed.year || "?"}).`,
+          message: `JSON validado (${result.summary?.months || 0} meses em ${result.summary?.years || 0} anos).`,
+          warnings: result.warnings || [],
         };
+        return result;
       } catch (err) {
         this.importPayload = null;
         this.importFeedback = {
           ok: false,
-          message: "JSON invalido ou corrompido.",
+          message: err.message || "Falha ao validar JSON.",
+          errors: err.payload?.errors || [],
+          warnings: err.payload?.warnings || [],
         };
+        throw err;
+      } finally {
+        this.adminLoading = false;
+      }
+    },
+    async parseImportFile(file) {
+      const text = await file.text();
+      try {
+        const parsed = JSON.parse(text);
+        await this.validateImportPayload(parsed);
+      } catch (err) {
+        this.importPayload = null;
+        if (!this.importFeedback || this.importFeedback.ok) {
+          this.importFeedback = {
+            ok: false,
+            message: "JSON invalido ou corrompido.",
+          };
+        }
       }
     },
     async sendImportToApi() {
@@ -257,15 +352,23 @@ export const useFinanceStore = defineStore("finance", {
       this.adminLoading = true;
       this.message = "Enviando JSON para API...";
       try {
-        await this.api("/admin/import", {
+        const result = await this.api("/admin/import", {
           method: "POST",
           body: this.importPayload,
         });
         this.message = "Import concluida. Recarregando painel...";
-        await this.refreshAll();
+        this.hasBase = true;
+        this.config = result.config || this.importPayload.config || null;
+        await this.bootstrap();
       } catch (err) {
         this.error = err.message;
         this.message = "Falha ao importar JSON";
+        this.importFeedback = {
+          ok: false,
+          message: err.message,
+          errors: err.payload?.errors || [],
+          warnings: err.payload?.warnings || [],
+        };
       } finally {
         this.adminLoading = false;
       }

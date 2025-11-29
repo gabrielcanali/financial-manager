@@ -7,9 +7,19 @@
 - Valores numericos usam ponto decimal; positivos representam entrada/credito, negativos saida/debito.
 - Objetos com chaves em snake_case para alinhar com o JSON existente.
 
+## Configuracoes iniciais (onboarding)
+- `fechamento_fatura_dia` (number 1..31): dia usado como base para o fechamento da fatura na criacao da base.
+- `adiantamento_salario`: bloco opcional sobre o adiantamento.
+  - `habilitado` (boolean).
+  - `dia` (number|null): dia do adiantamento quando habilitado.
+  - `percentual` (number|null): percentual do salario adiantado (0 < percentual <= 100) quando habilitado.
+- `criado_em` / `atualizado_em` (string ISO): metadados gerados ao criar ou importar a base.
+- Defaults quando ausentes: `fechamento_fatura_dia = 5` e `adiantamento_salario` desabilitado.
+
 ## Raiz do arquivo
 ```json
 {
+  "config": { ... },
   "anos": {
     "2025": {
       "meses": {

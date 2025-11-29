@@ -43,8 +43,11 @@ Health check: `GET /health`.
   - `?generateFuture=true` em `POST /recurrents` gera meses futuros ate `recorrencia.termina_em`.
   - `?cascade=true` em `PUT /entries` ou `PUT /recurrents` aplica a alteracao para toda a serie (parcelas/recorrencias restantes).
 - Admin e operacao:
+  - `GET /admin/status` - retorna se ha base carregada e a configuracao atual.
   - `GET /admin/export` - devolve o JSON completo atual.
+  - `POST /admin/validate` - valida um JSON sem sobrescrever a base.
   - `POST /admin/import` - sobrescreve o JSON com o corpo enviado.
+  - `POST /admin/bootstrap` - cria uma nova base vazia com configuracoes iniciais.
   - `POST /admin/backup` - grava um arquivo de backup em `data/backups/financeiro-<timestamp>.json`.
 
 Formato de datas: ISO `YYYY-MM-DD`. Valores numericos (positivo=entrada, negativo=saida).

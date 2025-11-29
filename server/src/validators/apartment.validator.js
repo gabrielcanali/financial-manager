@@ -74,4 +74,48 @@ function validateApartmentPayload(payload = {}) {
   return { errors, value: result };
 }
 
-export { validateYearMonth, validateApartmentPayload };
+function validateApartmentSeries(list, key) {
+  const errors = [];
+  const value = [];
+
+  if (!Array.isArray(list)) {
+    errors.push(`${key} deve ser uma lista`);
+    return { errors, value };
+  }
+
+  list.forEach((entry, index) => {
+    if (!entry || typeof entry !== "object") {
+      errors.push(`${key}[${index}] deve ser um objeto`);
+      return;
+    }
+
+    const ano = String(entry.ano ?? entry.year ?? "").padStart(4, "0");
+    const mes = String(entry.mes ?? entry.month ?? "").padStart(2, "0");
+    const ymErrors = validateYearMonth(ano, mes);
+    ymErrors.forEach((err) => errors.push(`${key}[${index}]: ${err}`));
+
+    const { errors: entryErrors, value: normalized } = validateInstallment(
+      entry,
+      `${key}[${index}]`
+    );
+    errors.push(...entryErrors);
+
+    if (!entryErrors.length && !ymErrors.length) {
+      value.push({
+        ...normalized,
+        ano,
+        mes,
+      });
+    }
+  });
+
+  return { errors, value };
+}
+
+export {
+  validateYearMonth,
+  validateApartmentPayload,
+  validateApartmentSeries,
+  MAX_DEBT_VALUE,
+  MAX_INSTALLMENT_VALUE,
+};
