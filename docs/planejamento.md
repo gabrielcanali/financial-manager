@@ -24,7 +24,6 @@
 - Validacoes iniciais de datas/parcelas/limites estao presentes; rotinas de admin agora expostas e precisam de hardening/monitoracao futura.
 - Onboarding do front cobre o caso sem JSON, validando o arquivo local antes do import e permitindo bootstrap de base com configuracao inicial.
 
-
 ## Sintese da ideia V2 (Front e onboarding)
 - Tela de boas vindas exibida quando nao houver JSON carregado, oferecendo importar um arquivo existente ou criar uma nova base com configuracao inicial.
 - Configuracoes iniciais: data de fechamento da fatura, indicacao de adiantamento de salario, dia do adiantamento e percentual adiantado, gravadas junto ao JSON criado/carregado.
