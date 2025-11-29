@@ -47,7 +47,7 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const store = useFinanceStore();
 
-  if (!store.statusLoaded && !store.loading) {
+  if (!store.statusLoaded) {
     await store.bootstrap();
   }
 

@@ -11,12 +11,199 @@ const ui = inject("financeUi");
         <p class="text-xs uppercase text-slate-400">Visualizacao mensal</p>
         <h2 class="text-xl font-semibold text-slate-50">Movimentacoes variaveis e poupanca</h2>
         <p class="text-xs text-slate-400">
-          Consuma, edite e cadastre lancamentos do mes atual. Use o atalho para recorrentes quando precisar da serie.
+          Consuma, edite e cadastre lancamentos do mes atual, com calendario e progresso da fatura.
         </p>
       </div>
-      <RouterLink class="pill bg-white/5 text-slate-200 hover:border-accent/50 hover:text-accent" to="/recurrents">
-        Abrir recorrentes
-      </RouterLink>
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <span class="pill bg-white/5">
+          Variaveis: {{ ui.formatCurrency(ui.variableStatus.net) }}
+        </span>
+        <span class="pill bg-white/5">
+          Recorrentes: {{ ui.formatCurrency(ui.recurringStatus.totals.net) }}
+        </span>
+        <RouterLink class="pill bg-white/5 text-slate-200 hover:border-accent/50 hover:text-accent" to="/recurrents">
+          Abrir recorrentes
+        </RouterLink>
+      </div>
+    </section>
+
+    <section class="grid gap-4 xl:grid-cols-3">
+      <div class="glass-panel space-y-4 p-5 xl:col-span-2">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-semibold">Resumo do mes</p>
+            <p class="text-xs text-slate-400">Saldo atual: {{ ui.formatCurrency(ui.store.monthSummary?.resultado?.saldo_disponivel || 0) }}</p>
+          </div>
+          <span class="pill bg-white/5">{{ ui.store.year }}-{{ ui.store.month }}</span>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            v-for="card in ui.monthCards"
+            :key="card.label"
+            class="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-white/0 to-white/5 p-4 shadow-card"
+          >
+            <p class="text-xs uppercase text-slate-400">{{ card.label }}</p>
+            <p class="text-2xl font-bold text-slate-50">
+              {{ ui.formatCurrency(card.value) }}
+            </p>
+            <p class="text-xs text-slate-500">{{ card.helper }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="glass-panel space-y-4 p-5">
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-semibold">Recorrentes e fatura</p>
+          <span class="pill bg-white/5">
+            Fecha dia {{ ui.recurringStatus.closingDay || "??" }}
+          </span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex items-center justify-between">
+            <span>Saldo recorrentes</span>
+            <span
+              class="font-semibold"
+              :class="ui.recurringStatus.totals.net >= 0 ? 'text-emerald-200' : 'text-rose-200'"
+            >
+              {{ ui.formatCurrency(ui.recurringStatus.totals.net) }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-slate-400">
+            <span>Compromisso vs receitas</span>
+            <span class="text-slate-100 font-semibold">
+              {{ ui.recurringStatus.commitment }}%
+            </span>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs uppercase text-slate-400">
+            <span>Progresso da fatura</span>
+            <span class="text-slate-100 font-semibold">
+              {{ ui.recurringStatus.invoiceProgress }}%
+            </span>
+          </div>
+          <div class="h-2 w-full rounded-full bg-white/10">
+            <div
+              class="h-full rounded-full bg-gradient-to-r from-accent to-accentSoft transition-all"
+              :style="{ width: `${ui.recurringStatus.invoiceProgress}%` }"
+            ></div>
+          </div>
+          <p class="text-[11px] text-slate-400">
+            {{ ui.recurringStatus.invoiceProgress }}% das saidas recorrentes estao previstas antes do fechamento.
+          </p>
+        </div>
+        <div class="rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-slate-300">
+          <div class="flex items-center justify-between">
+            <span>Pre-fechamento</span>
+            <span class="font-semibold text-rose-200">
+              {{ ui.formatCurrency(-ui.recurringStatus.pre.expense) }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span>Pos-fechamento</span>
+            <span class="font-semibold text-rose-200">
+              {{ ui.formatCurrency(-ui.recurringStatus.pos.expense) }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span>Entradas recorrentes</span>
+            <span class="font-semibold text-emerald-200">
+              {{ ui.formatCurrency(ui.recurringStatus.totals.income) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid gap-4 lg:grid-cols-3">
+      <div class="glass-panel space-y-3 p-5 lg:col-span-2">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-semibold">Calendario de lancamentos</p>
+            <p class="text-xs text-slate-400">
+              Variaveis + recorrentes, agrupados por dia.
+            </p>
+          </div>
+          <span class="pill bg-white/5">{{ ui.calendarGrid.length }} dias</span>
+        </div>
+        <div class="grid max-h-[420px] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
+          <div
+            v-for="day in ui.calendarGrid"
+            :key="day.date"
+            class="rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-slate-300"
+          >
+            <div class="flex items-center justify-between text-[11px] uppercase text-slate-400">
+              <span>Dia {{ String(day.day).padStart(2, '0') }}</span>
+              <span
+                class="font-semibold"
+                :class="day.total >= 0 ? 'text-emerald-200' : 'text-rose-200'"
+              >
+                {{ ui.formatCurrency(day.total) }}
+              </span>
+            </div>
+            <ul class="mt-2 space-y-1">
+              <li
+                v-for="event in day.items.slice(0, 3)"
+                :key="event.descricao + event.valor + event.kind"
+                class="rounded-md bg-slate-900/60 px-2 py-1"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-200">{{ event.descricao }}</span>
+                  <span class="text-[10px] uppercase text-slate-500">{{ event.kind }}</span>
+                </div>
+                <p
+                  class="text-[11px] font-semibold"
+                  :class="event.valor >= 0 ? 'text-emerald-200' : 'text-rose-200'"
+                >
+                  {{ ui.formatCurrency(event.valor) }}
+                </p>
+              </li>
+              <li v-if="day.items.length > 3" class="text-[10px] text-slate-500">
+                + {{ day.items.length - 3 }} itens
+              </li>
+              <li v-if="!day.items.length" class="text-[11px] text-slate-600">
+                Livre / sem registros
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="glass-panel space-y-4 p-5">
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-semibold">Fluxo diario</p>
+          <span class="pill bg-white/5">{{ ui.store.year }}-{{ ui.store.month }}</span>
+        </div>
+        <div class="h-48 w-full overflow-hidden rounded-xl border border-white/10 bg-slate-900/60">
+          <svg v-if="ui.dailyFlowChart.points" viewBox="0 0 420 180" class="h-full w-full">
+            <defs>
+              <linearGradient id="flow-grad-monthly" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#c084fc" />
+                <stop offset="100%" stop-color="#38bdf8" />
+              </linearGradient>
+            </defs>
+            <polyline
+              :points="ui.dailyFlowChart.points"
+              fill="none"
+              stroke="url(#flow-grad-monthly)"
+              stroke-width="3"
+            />
+            <template v-for="(label, idx) in ui.dailyFlowChart.labels" :key="idx">
+              <circle :cx="label.x" :cy="label.y" r="4" fill="#38bdf8" />
+            </template>
+          </svg>
+          <div v-else class="flex h-full items-center justify-center text-sm text-slate-500">
+            Sem movimentacoes para plotar.
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3 text-xs text-slate-300">
+          <span
+            v-for="(label, idx) in ui.dailyFlowChart.labels"
+            :key="idx"
+            class="pill bg-white/5"
+          >
+            {{ label.ref }} - {{ ui.formatCurrency(label.value) }}
+          </span>
+        </div>
+      </div>
     </section>
 
     <section class="glass-panel p-5">
@@ -24,7 +211,9 @@ const ui = inject("financeUi");
         <div>
           <p class="text-sm font-semibold">Entradas e saidas</p>
           <p class="text-xs text-slate-400">
-            Total: {{ ui.formatCurrency(ui.store.sum(ui.store.entries)) }}
+            Entradas: {{ ui.formatCurrency(ui.variableStatus.income) }} | Saidas:
+            {{ ui.formatCurrency(-ui.variableStatus.expense) }} | Liquido:
+            {{ ui.formatCurrency(ui.variableStatus.net) }}
           </p>
         </div>
         <span class="pill bg-white/5">CRUD de variaveis</span>
@@ -54,7 +243,7 @@ const ui = inject("financeUi");
               >
                 {{ ui.formatCurrency(entry.valor) }}
               </td>
-              <td class="px-3 py-2 text-slate-300">{{ entry.parcela || "-" }}</td>
+              <td class="px-3 py-2 text-slate-300">{{ entry.parcela || '-' }}</td>
               <td class="px-3 py-2">
                 <div class="flex gap-2">
                   <button class="btn px-3 py-1 text-xs" @click="ui.selectEntry(entry)">

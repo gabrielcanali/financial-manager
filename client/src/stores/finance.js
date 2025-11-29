@@ -29,7 +29,7 @@ export const useFinanceStore = defineStore("finance", {
     monthData: null,
     apartmentEvolution: null,
     config: null,
-    hasBase: true,
+    hasBase: false,
     statusLoaded: false,
     loading: false,
     adminLoading: false,
@@ -81,6 +81,7 @@ export const useFinanceStore = defineStore("finance", {
         await this.fetchYearSummary(this.year);
       } catch (err) {
         this.error = err.message;
+        this.hasBase = false;
         this.message = "Erro ao iniciar painel";
       } finally {
         this.statusLoaded = true;

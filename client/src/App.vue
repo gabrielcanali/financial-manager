@@ -1,6 +1,6 @@
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, provide, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, provide, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useFinanceStore } from "./stores/finance";
 
@@ -253,11 +253,82 @@ const dailyFlowChart = computed(() => {
   return { points, labels, min: Number(min.toFixed(2)), max: Number(max.toFixed(2)) };
 });
 
-const isPlainLayout = computed(() => route.meta?.layout === "plain");
+const variableStatus = computed(() => summarizeMovements(store.entries));
 
-onMounted(() => {
-  store.bootstrap();
+const recurringStatus = computed(() => {
+  const pre = summarizeMovements(store.preRecurrents);
+  const pos = summarizeMovements(store.postRecurrents);
+  const totalExpense = pre.expense + pos.expense;
+  const totalIncome = pre.income + pos.income;
+  const coverage = Number(store.monthSummary?.resultado?.receitas || 0);
+  const commitment = coverage
+    ? Math.round((totalExpense / coverage) * 100)
+    : 0;
+
+  return {
+    pre,
+    pos,
+    totals: {
+      income: Number(totalIncome.toFixed(2)),
+      expense: Number(totalExpense.toFixed(2)),
+      net: Number((pre.net + pos.net).toFixed(2)),
+    },
+    invoiceProgress: totalExpense ? Math.round((pre.expense / totalExpense) * 100) : 0,
+    coverage,
+    commitment,
+    closingDay: Number(store.config?.fechamento_fatura_dia || 0) || null,
+  };
 });
+
+const calendarGrid = computed(() => {
+  const totalDays = daysInMonth(store.year, store.month);
+  if (!totalDays) return [];
+
+  const days = Array.from({ length: totalDays }, (_, idx) => ({
+    day: idx + 1,
+    date: `${store.year}-${store.month}-${String(idx + 1).padStart(2, "0")}`,
+    total: 0,
+    items: [],
+  }));
+
+  const pushEvents = (list = [], kind) => {
+    list.forEach((item) => {
+      const day = parseDayFromIso(item?.data);
+      if (!day || day < 1 || day > totalDays) return;
+      const value = Number(item.valor || 0);
+      days[day - 1].items.push({
+        descricao: item.descricao || "Sem descricao",
+        valor: value,
+        kind,
+      });
+      days[day - 1].total = Number((days[day - 1].total + value).toFixed(2));
+    });
+  };
+
+  pushEvents(store.entries, "Variavel");
+  pushEvents(store.preRecurrents, "Recorrente (pre)");
+  pushEvents(store.postRecurrents, "Recorrente (pos)");
+
+  return days;
+});
+
+const recurringTimeline = computed(() => {
+  const normalize = (list = [], period) =>
+    list
+      .filter((item) => isIsoDate(item?.data))
+      .map((item) => ({
+        period,
+        data: item.data,
+        descricao: item.descricao || "Recorrente",
+        valor: Number(item.valor || 0),
+      }));
+
+  return [...normalize(store.preRecurrents, "pre"), ...normalize(store.postRecurrents, "pos")].sort(
+    (a, b) => a.data.localeCompare(b.data)
+  );
+});
+
+const isPlainLayout = computed(() => route.meta?.layout === "plain");
 
 watch(
   () => [store.year, store.month, store.config?.fechamento_fatura_dia],
@@ -339,6 +410,22 @@ function parseDayFromIso(value) {
   if (!isIsoDate(value)) return null;
   const [, , day] = String(value).split("-");
   return Number(day);
+}
+
+function summarizeMovements(list = []) {
+  return list.reduce(
+    (acc, item) => {
+      const value = Number(item?.valor || 0);
+      if (value >= 0) {
+        acc.income += value;
+      } else {
+        acc.expense += Math.abs(value);
+      }
+      acc.net += value;
+      return acc;
+    },
+    { income: 0, expense: 0, net: 0 }
+  );
 }
 
 function pushToast(message, tone = "info") {
@@ -826,6 +913,10 @@ const ui = {
   annualCards,
   apartmentChart,
   dailyFlowChart,
+  variableStatus,
+  recurringStatus,
+  calendarGrid,
+  recurringTimeline,
   spendingAdvice,
   nextInvoices,
   importWithBackup,

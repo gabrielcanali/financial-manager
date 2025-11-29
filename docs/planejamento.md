@@ -11,6 +11,7 @@
 - Base JSON inicial em server/data/financeiro.json com estrutura atualizada (poupanca/emprestimos). Front refeito com stack Vite + Vue 3 + Tailwind + Pinia em `client/`, com dashboards mais ricos, proxy de dev para `/api`, CRUD completo (lancamentos, recorrentes, poupanca e emprestimos) e operacoes de admin centralizadas no store.
 - SPA agora usa vue-router com sidebar, guardas de rota (bloqueio sem base), layout por rota (dashboard, apartamento, emprestimos, visao mensal e recorrentes) e breadcrumbs/atalhos entre telas.
 - Dashboard V2 entrega barra de quick actions (fatura e admin), cards de quanto posso gastar/proximas faturas/resumos e grafico de fluxo diario ligado ao store.
+- Visualizacao mensal/recorrentes V2 traz resumos compartilhados, calendario de lancamentos, progresso da fatura pre-fechamento e timeline de recorrentes junto aos formularios de variaveis/poupanca.
 - Modulo apartamento implementado com rotas `/api/apartment` para registrar parcelas Caixa/Construtora, calcular diferenca vs mes anterior, evolucao de saldo devedor e consolidar no resumo mensal/anual.
 - Servidor Express serve o cliente estatico em `/`, priorizando `client/dist` (build do Vite) e caindo para `client/` quando nao houver build; API segue em `/api`. Endpoints de admin adicionados (`/admin/export`, `/admin/import`, `/admin/backup`) para operacao sobre o JSON, agora com logs e opcao de backup automatico no import.
 - Onboarding conectado: `/admin/status`, `/admin/validate` e `/admin/bootstrap` detectam ausencia de base, validam o JSON antes de importar e permitem criar um arquivo inicial com configuracoes (fechamento e adiantamento).
@@ -60,8 +61,8 @@
 - SPA consumindo novas rotas de admin (exportar, backup e importar arquivo lido).
 
 ## Priorizacao atual
-- Fase 9 (Front V2) segue priorizada: onboarding/config + navegacao/sidebar guardada entregues; Dashboard V2 concluido (quick actions, cards, quanto posso gastar, proximas faturas, fluxo diario).
-- Proxima entrega priorizada: Fase 9 - Etapa 5 (Visualizacao mensal e recorrentes com graficos/calendario compartilhados).
+- Fase 9 (Front V2) segue priorizada: onboarding/config + navegacao/sidebar guardada entregues; Dashboard V2 e a visualizacao mensal/recorrentes (resumos, calendario e fatura) ja estao prontas.
+- Proxima entrega priorizada: Fase 9 - Etapa 6 (UX/categorias/componentizacao) para filtros, tags e feedbacks mais claros em todo o front.
 - Fase 8 permanece com pendencias menores (scripts de lint/test e seeds opcionais) para um ciclo rapido posterior.
 
 ## Roteiro da ideia V2 (Front V2 - Fase 9 priorizada)
@@ -81,11 +82,10 @@
 - Quick Action bar para cadastrar fatura e atalho de import/export.
 - Cards: resumo mensal, saldo disponivel/quanto posso gastar, proximas faturas e resumo anual; grafico de fluxo de caixa diario ligado aos dados atuais.
 
-5) Visualizacao mensal e recorrentes (alto)
-- Tela com resumos, graficos e calendario de lancamentos/recorrentes; exibir progresso de faturas e saldo de recorrentes.
-- Componentes compartilhados (listas, cards, graficos) reutilizados no Dashboard e demais modulos.
+5) Visualizacao mensal e recorrentes (entregue)
+- Resumos compartilhados, grafico de fluxo diario, progresso de fatura pre-fechamento e calendario/timeline combinando variaveis e recorrentes.
 
-6) UX, categorias e componentizacao (medio)
+6) UX, categorias e componentizacao (alto - proximo)
 - Introduzir categorias/tags e filtros basicos; alinhar feedbacks (toasts/erros) e mensagens de validacao para uso intuitivo.
 - Consolidar componentes para Apartmento/Emprestimos e novos graficos.
 
