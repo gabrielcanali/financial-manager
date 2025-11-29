@@ -1,8 +1,9 @@
 <script setup>
-import { inject } from "vue";
 import MetricCard from "../components/MetricCard.vue";
+import SimpleLineChart from "../components/SimpleLineChart.vue";
+import { useFinanceUi } from "../composables/useFinanceUi";
 
-const ui = inject("financeUi");
+const ui = useFinanceUi();
 </script>
 
 <template>
@@ -190,28 +191,16 @@ const ui = inject("financeUi");
           <p class="text-sm font-semibold">Fluxo de caixa diario</p>
           <span class="pill bg-white/5">{{ ui.store.year }}-{{ ui.store.month }}</span>
         </div>
-        <div class="h-48 w-full overflow-hidden rounded-xl border border-white/10 bg-slate-900/60">
-          <svg v-if="ui.dailyFlowChart.points" viewBox="0 0 420 180" class="h-full w-full">
-            <defs>
-              <linearGradient id="flow-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#c084fc" />
-                <stop offset="100%" stop-color="#38bdf8" />
-              </linearGradient>
-            </defs>
-            <polyline
-              :points="ui.dailyFlowChart.points"
-              fill="none"
-              stroke="url(#flow-grad)"
-              stroke-width="3"
-            />
-            <template v-for="(label, idx) in ui.dailyFlowChart.labels" :key="idx">
-              <circle :cx="label.x" :cy="label.y" r="4" fill="#38bdf8" />
-            </template>
-          </svg>
-          <div v-else class="flex h-full items-center justify-center text-sm text-slate-500">
-            Sem movimentacoes para plotar.
-          </div>
-        </div>
+        <SimpleLineChart
+          gradient-id="flow-grad"
+          :points="ui.dailyFlowChart.points"
+          :labels="ui.dailyFlowChart.labels"
+          container-class="h-48 w-full"
+          from-color="#c084fc"
+          to-color="#38bdf8"
+          dot-color="#38bdf8"
+          empty-message="Sem movimentacoes para plotar."
+        />
         <div class="flex flex-wrap gap-3 text-xs text-slate-300">
           <span
             v-for="(label, idx) in ui.dailyFlowChart.labels"
@@ -230,28 +219,16 @@ const ui = inject("financeUi");
             {{ ui.store.apartmentEvolution?.combinada?.length || 0 }} pontos
           </span>
         </div>
-        <div class="h-48 w-full overflow-hidden rounded-xl border border-white/10 bg-slate-900/60">
-          <svg v-if="ui.apartmentChart.points" viewBox="0 0 420 180" class="h-full w-full">
-            <defs>
-              <linearGradient id="apt-grad-dashboard" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#5eead4" />
-                <stop offset="100%" stop-color="#93c5fd" />
-              </linearGradient>
-            </defs>
-            <polyline
-              :points="ui.apartmentChart.points"
-              fill="none"
-              stroke="url(#apt-grad-dashboard)"
-              stroke-width="3"
-            />
-            <template v-for="(label, idx) in ui.apartmentChart.labels" :key="idx">
-              <circle :cx="label.x" :cy="label.y" r="4" fill="#5eead4" />
-            </template>
-          </svg>
-          <div v-else class="flex h-full items-center justify-center text-sm text-slate-500">
-            Sem serie de evolucao para o ano selecionado.
-          </div>
-        </div>
+        <SimpleLineChart
+          gradient-id="apt-grad-dashboard"
+          :points="ui.apartmentChart.points"
+          :labels="ui.apartmentChart.labels"
+          container-class="h-48 w-full"
+          from-color="#5eead4"
+          to-color="#93c5fd"
+          dot-color="#5eead4"
+          empty-message="Sem serie de evolucao para o ano selecionado."
+        />
         <div class="flex flex-wrap gap-3 text-xs text-slate-300">
           <span
             v-for="(label, idx) in ui.apartmentChart.labels"

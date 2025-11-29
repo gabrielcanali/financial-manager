@@ -1,8 +1,9 @@
 
 <script setup>
-import { computed, onBeforeUnmount, provide, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, onErrorCaptured, provide, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useFinanceStore } from "./stores/finance";
+import { FINANCE_UI_KEY } from "./composables/useFinanceUi";
 
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const YEAR_MONTH_REGEX = /^\d{4}-\d{2}$/;
@@ -20,6 +21,8 @@ const store = useFinanceStore();
 const route = useRoute();
 
 const toast = ref(null);
+const viewError = ref("");
+const viewErrorDetails = ref("");
 let toastTimeout = null;
 const importWithBackup = ref(true);
 const entryErrors = ref([]);
@@ -38,7 +41,6 @@ const editingRecurring = ref(null);
 
 const savingsDraft = reactive(defaultSaving());
 const loanDraft = reactive(defaultLoan());
-const importInput = ref(null);
 const onboardingForm = reactive({
   fechamento_fatura_dia: 5,
   adiantamento_habilitado: false,
@@ -395,6 +397,32 @@ watch(recurringAvailableTags, (tags) => {
     recurringFilters.tag = "all";
   }
 });
+
+onMounted(() => {
+  if (!store.statusLoaded && !store.loading) {
+    store.bootstrap();
+  }
+});
+
+onErrorCaptured((error, instance, info) => {
+  const componentName =
+    instance?.type?.name ||
+    instance?.type?.__file?.replace?.(/^.*[\\/]/, "") ||
+    "componente-desconhecido";
+  console.error("[finance-view-error]", { error, info, componentName });
+  if (!error) return false;
+  const message = error.message || "Erro ao renderizar a tela";
+  viewError.value = message;
+  const locationHint = info ? `${componentName} • ${info}` : componentName;
+  viewErrorDetails.value = `${locationHint}${error.stack ? `\n${error.stack}` : ""}`;
+  pushToast(`Erro interno: ${message}`, "error");
+  return false;
+});
+
+function resetViewError() {
+  viewError.value = "";
+  viewErrorDetails.value = "";
+}
 
 onBeforeUnmount(() => {
   if (toastTimeout) clearTimeout(toastTimeout);
@@ -1062,7 +1090,7 @@ async function runImportToApi() {
   }
 }
 
-const ui = {
+const ui = reactive({
   store,
   toast,
   formatCurrency,
@@ -1086,7 +1114,6 @@ const ui = {
   filteredPreRecurrents,
   filteredPostRecurrents,
   importWithBackup,
-  importInput,
   onboardingForm,
   onboardingErrors,
   entryForm,
@@ -1127,9 +1154,9 @@ const ui = {
   removeLoan,
   handleImport,
   runImportToApi,
-};
+});
 
-provide("financeUi", ui);
+provide(FINANCE_UI_KEY, ui);
 </script>
 
 <template>
@@ -1238,6 +1265,29 @@ provide("financeUi", ui);
           </div>
           <span class="pill bg-white/5">Aguardando API</span>
         </div>
+
+        <div
+          v-if="viewError"
+          class="glass-panel border border-rose-500/30 bg-rose-500/10 text-rose-100"
+        >
+          <p class="font-semibold">Ops, algo deu errado:</p>
+          <p class="text-xs text-rose-200">{{ viewError }}</p>
+          <pre
+            v-if="viewErrorDetails"
+            class="mt-2 whitespace-pre-wrap rounded-md border border-rose-500/30 bg-rose-500/15 p-3 text-[11px] text-rose-100"
+          >
+{{ viewErrorDetails }}
+          </pre>
+          <div class="mt-3 flex flex-wrap gap-2 text-xs">
+            <button class="btn px-3 py-2" @click="resetViewError">
+              Ocultar erro
+            </button>
+            <button class="btn px-3 py-2" @click="store.refreshAll" :disabled="store.loading">
+              Recarregar dados
+            </button>
+          </div>
+        </div>
+        <div v-if="viewError" class="h-3"></div>
 
         <template v-else>
           <header

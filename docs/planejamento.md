@@ -62,11 +62,11 @@
 - SPA consumindo novas rotas de admin (exportar, backup e importar arquivo lido).
 
 ## Priorizacao atual
-- Fase 9 (Front V2) foi concluida com a entrega da etapa 6: filtros, categorias/tags e componentes reutilizaveis ja estao no ar em Dashboard/Mensal/Recorrentes.
-- Proxima entrega priorizada: reabrir a Fase 8 (Iteracao de qualidade) para scripts de lint/teste e seeds opcionais, garantindo estabilidade antes do hardening da API/admin.
-- Pendencias de operacao pesada (hardening de admin/monitoracao) continuam em backlog para depois do ciclo de qualidade.
+- Fase 9 (Front V2) segue entregue; esta iteracao fechou a Fase 8 (Iteracao de qualidade) com refinamento do front (componentizacao de graficos/contexts, limpeza e correcoes de layout).
+- Proxima entrega priorizada: Fase 10 (Hardening/operacao) para automatizar lint/testes, fortalecer rotas de admin/backup e preparar seeds/snapshots seguros para onboarding rapido.
+- Backlog mantem itens de monitoracao/logs mais profundos e hardening de operacao para apos o ciclo de qualidade.
 
-## Roteiro da ideia V2 (Front V2 - Fase 9 priorizada)
+## Roteiro da ideia V2 (Front V2 - entregue)
 1) Onboarding e checagem de base (entregue)
 - Detectar ausencia de JSON e exibir tela de boas vindas com importacao ou criacao; validar JSON importado (schema + erros claros) antes de carregar via `/admin/validate`.
 - Criar base nova com defaults (ano/mes atual, salario zerado, recorrentes vazios) e iniciar carregamento/estado no store com `/admin/bootstrap`.
@@ -90,11 +90,13 @@
 - Categorias/tags opcionais nas movimentacoes, filtros combinados (texto, tipo, tags, categoria, periodo) e feedbacks visuais unificados nas telas de Mensal/Recorrentes.
 - Componentes compartilhados (cards/badges) garantindo consistencia no Dashboard, resumo mensal e timeline de recorrentes.
 
-## Fila seguinte (Iteracao de qualidade - Fase 8)
-- Pendencias de qualidade rapida: scripts de lint/test padrao (eslint + smoke tests do store) e exemplos/seeds opcionais para novos usuarios iniciais agora se tornam o foco imediato.
+## Fila seguinte (Fase 10 - Hardening / operacao)
+- Automatizar lint/testes (front e API) e smoke tests do store, acoplando aos scripts padrao e preparando CI local.
+- Endurecer operacoes de admin/import/export/backup com logs claros e monitoracao basica para detectar falhas.
+- Publicar seeds/exemplos opcionais para novos usuarios subirem uma base de teste rapidamente.
 
 ## Iteracao de qualidade (Fase 8) entregue
-- Build do Vite integrado ao server: quando existir `client/dist`, o Express serve o bundle otimizado automaticamente (fallback para `client/` em dev).
-- Endpoints de admin com logs e opcao de backup automatico no import (`/admin/import?backup=true|false`), mais validacoes com alerta para JSON sem meses.
-- SPA com toasts/banners de feedback e validacoes locais para formularios de lancamento/recorrentes/poupanca/emprestimos, alem do toggle de backup no fluxo de importacao.
+- Front refinado com componente reutilizavel de grafico de linhas (SimpleLineChart) para Dashboard/Mensal/Apartamento e helper `useFinanceUi` centralizando o contexto, reduzindo duplicacao e melhorando legibilidade.
+- Correcoes de layout e carregamento: bootstrap garantido ao montar o App, Suspense/fallback no RouterView e import ausente sanado (CategoryBadge), eliminando o caso em que so apareciam sidebar + header.
+- Codigo morto removido e preparacao para proxima fase de qualidade (scripts automatizados e seeds) mantendo o store/fluxos intactos.
 

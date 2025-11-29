@@ -1,8 +1,9 @@
 <script setup>
-import { inject, watch } from "vue";
+import { watch } from "vue";
 import { useRouter } from "vue-router";
+import { useFinanceUi } from "../composables/useFinanceUi";
 
-const ui = inject("financeUi");
+const ui = useFinanceUi();
 const router = useRouter();
 
 watch(

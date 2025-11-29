@@ -1,7 +1,7 @@
 <script setup>
-import { inject } from "vue";
+import { useFinanceUi } from "../composables/useFinanceUi";
 
-const ui = inject("financeUi");
+const ui = useFinanceUi();
 </script>
 
 <template>

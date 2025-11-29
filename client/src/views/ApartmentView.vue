@@ -1,7 +1,8 @@
 <script setup>
-import { inject } from "vue";
+import SimpleLineChart from "../components/SimpleLineChart.vue";
+import { useFinanceUi } from "../composables/useFinanceUi";
 
-const ui = inject("financeUi");
+const ui = useFinanceUi();
 </script>
 
 <template>
@@ -29,31 +30,17 @@ const ui = inject("financeUi");
         </div>
         <span class="pill bg-white/5">Atual {{ ui.store.year }}</span>
       </div>
-      <div class="h-52 w-full overflow-hidden rounded-xl border border-white/10 bg-slate-900/60">
-        <svg v-if="ui.apartmentChart.points" viewBox="0 0 420 200" class="h-full w-full">
-          <defs>
-            <linearGradient id="apt-grad-ap-view" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#5eead4" />
-              <stop offset="100%" stop-color="#93c5fd" />
-            </linearGradient>
-          </defs>
-          <polyline
-            :points="ui.apartmentChart.points"
-            fill="none"
-            stroke="url(#apt-grad-ap-view)"
-            stroke-width="3"
-          />
-          <template v-for="(label, idx) in ui.apartmentChart.labels" :key="idx">
-            <circle :cx="label.x" :cy="label.y" r="4" fill="#5eead4" />
-          </template>
-        </svg>
-        <div
-          v-else
-          class="flex h-full items-center justify-center text-sm text-slate-500"
-        >
-          Sem serie de evolucao para o ano selecionado.
-        </div>
-      </div>
+      <SimpleLineChart
+        gradient-id="apt-grad-ap-view"
+        :points="ui.apartmentChart.points"
+        :labels="ui.apartmentChart.labels"
+        container-class="h-52 w-full"
+        :height="200"
+        from-color="#5eead4"
+        to-color="#93c5fd"
+        dot-color="#5eead4"
+        empty-message="Sem serie de evolucao para o ano selecionado."
+      />
       <div class="flex flex-wrap gap-3 text-xs text-slate-300">
         <span
           v-for="(label, idx) in ui.apartmentChart.labels"
