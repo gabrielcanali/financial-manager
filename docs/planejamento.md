@@ -18,6 +18,13 @@
 - Ainda faltam refinamentos visuais/feedbacks da SPA e um ciclo de build/teste integrado (lint, etc.).
 - Validacoes iniciais de datas/parcelas/limites estao presentes; rotinas de admin agora expostas e precisam de hardening/monitoracao futura.
 
+
+## Sintese da ideia V2 (Front e onboarding)
+- Tela de boas vindas exibida quando nao houver JSON carregado, oferecendo importar um arquivo existente ou criar uma nova base com configuracao inicial.
+- Configuracoes iniciais: data de fechamento da fatura, indicacao de adiantamento de salario, dia do adiantamento e percentual adiantado, gravadas junto ao JSON criado/carregado.
+- Barra lateral com rotas: Dashboard (Quick Action para cadastrar fatura, cards de resumo mensal, saldo disponivel/quanto posso gastar, proximas faturas, resumo anual e grafico de fluxo de caixa diario), Meu Apartamento, Emprestimos, Visualizacao mensal (resumos, graficos e calendario) e Contas recorrentes.
+- Objetivos funcionais: uso intuitivo, categorizacao de contas, acompanhamento da progressao das faturas e do saldo de recorrentes e componentizacao das paginas.
+
 ## Roteiro sugerido de desenvolvimento
 1) Fundacao e contrato de dados (concluido)
 - Schema documentado em `docs/schema.md`, validacoes iniciais aplicadas nas rotas, CRUD basico implementado e testes de service.
@@ -48,8 +55,38 @@
 - README atualizado com comandos e rotas; server aceita JSON maior (limite 5mb) e exposicao do caminho do DB para backups.
 - SPA consumindo novas rotas de admin (exportar, backup e importar arquivo lido).
 
-## Proxima fase priorizada (Iteracao de qualidade - Fase 8)
+## Priorizacao atual
+- Fase 9 (Front V2 e onboarding) e a proxima entrega para destravar uso sem JSON e reorganizar o front.
+- Fase 8 (Iteracao de qualidade) fica na sequencia, focada em hardening e feedbacks do front e admin.
+
+## Roteiro da ideia V2 (Front V2 - Fase 9 priorizada)
+1) Onboarding e checagem de base (prioritario)
+- Detectar ausencia de JSON e exibir tela de boas vindas com importacao ou criacao; validar JSON importado (schema + erros claros) antes de carregar.
+- Criar base nova com defaults (ano/mes atual, salario zerado, recorrentes vazios) e iniciar carregamento/estado no store.
+
+2) Configuracoes iniciais e persistencia (prioritario)
+- Coletar data de fechamento da fatura e parametros de adiantamento (flag, dia, percentual) com validacao de ranges.
+- Persistir configuracoes no JSON e no store, expondo via API/admin; ajustar import/export/backup para incluir e restaurar o bloco de configuracao.
+
+3) Navegacao e barra lateral (alto)
+- Reorganizar rotas e sidebar para Dashboard, Meu Apartamento, Emprestimos, Visualizacao mensal e Contas recorrentes; aplicar guardas para impedir acesso sem base carregada.
+- Ajustar breadcrumbs e links rapidos para as novas rotas e garantir compatibilidade do proxy `/api` em dev/producao.
+
+4) Dashboard V2 (alto)
+- Quick Action bar para cadastrar fatura e atalho de import/export.
+- Cards: resumo mensal, saldo disponivel/quanto posso gastar, proximas faturas e resumo anual; grafico de fluxo de caixa diario ligado aos dados atuais.
+
+5) Visualizacao mensal e recorrentes (alto)
+- Tela com resumos, graficos e calendario de lancamentos/recorrentes; exibir progresso de faturas e saldo de recorrentes.
+- Componentes compartilhados (listas, cards, graficos) reutilizados no Dashboard e demais modulos.
+
+6) UX, categorias e componentizacao (medio)
+- Introduzir categorias/tags e filtros basicos; alinhar feedbacks (toasts/erros) e mensagens de validacao para uso intuitivo.
+- Consolidar componentes para Apartmento/Emprestimos e novos graficos.
+
+## Fila seguinte (Iteracao de qualidade - Fase 8)
 - Integrar build do Vite ao fluxo do server (servir `/dist`), garantir assets otimizados e proxy de `/api` em producao.
 - Harden dos endpoints de admin (validacoes extra, logs, opcao de backup automatico ao importar).
 - Ajustar feedbacks (toasts/banners) e validar campos de formularios no front (datas, parcelas, limites).
 - Adicionar scripts de lint/test padrao (eslint + testes do store) e exemplos/seeds opcionais para novos usuarios.
+

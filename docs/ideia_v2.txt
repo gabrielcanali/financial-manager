@@ -1,0 +1,40 @@
+# Financial Manager V2 - Reformulação do Front-end
+
+## Tela de boas vindas:
+- Aparece se não houver JSON carregado
+- Quer importar os dados de um JSON existente ou criar um novo?
+- Configuração inicial de variáveis
+- Criação do JSON e carregamento
+
+## Variáveis a serem configuradas:
+- Data de fechamento da fatura
+- Tem adiantamento do salário? 
+- Se tem adiantamento do salário, que dia é
+- Quanto é a porcentagem do salário que é adiantada
+
+## Barra Lateral (e rotas)
+
+1. Dashboard
+	* Acesso rápido (Quick Action Bar)
+		- Cadastrar fatura
+	* Cards:
+		- Resumo mensal
+		- Quanto posso gastar (ou saldo disponível)
+		- Próximas faturas
+		- Resumo anual
+	* Gráficos:
+		- Fluxo de caixa diário
+2. Meu Apartamento
+3. Empréstimos de dinheiro (Emprestado ou Requisitado)
+4. Visualização mensal
+	* Resumos
+	* Gráficos
+	* Visualização de calendário
+5. Contas recorrentes
+
+## Funcionalidades a serem implementadas
+- Sistema de uso intuitivo
+- Categorização de contas
+- Ver progressão de faturas
+- Ter um saldo de faturas recorrentes
+- Componentização das páginas

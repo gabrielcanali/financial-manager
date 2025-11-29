@@ -1,0 +1,98 @@
+IGNORAR PARA GERAÇÃO DE CÓDIGO. APENAS PARA USO DE ANOTAÇÕES E ESBOÇOS, SEM PROPÓSITO REAL DE IMPLEMENTAÇÃO.
+
+=========================
+
+IDEIAS PARA IMPLEMENTAÇÃO futuras
+
+=========================
+
+# Funcionalidades úteis que melhoram muito a experiência
+
+### Avisos de gasto acima do normal
+
+- Exemplo:
+  * "Você gastou 40% do seu salário em supermercado esse mês"
+  * "Você gastou mais que o mês passado em alimentação"
+
+### Metas por categoria
+
+- Exemplo: meta de R$ 500 no mercado
+- O sistema mostra barra de progresso e alerta ao ultrapassar
+
+### Simulação rápida
+
+- Campo onde o usuário digita:
+
+  * "Se eu comprar X por 300 reais, quanto fica meu saldo?"
+  * "Se eu parcelar em 3x, como fica o fluxo dos próximos meses?"
+
+# Funcionalidades avançadas
+
+### Integração com bancos (Nubank, Itaú, Caixa...)
+
+- Importar extratos PDF ou CSV
+- Reconciliação automática (tentar bater com categorias já usadas)
+- Marcar transações como "confirmadas"
+
+### Reconhecimento inteligente
+
+- O sistema entende que:
+  * "MC DONALDS" → categoria: alimentação
+  * "UBER" → categoria: transporte
+  * "AMAZON" → categoria: compras
+- Sugere categorias automaticamente
+
+### Módulo de cartão de crédito
+
+- Controle de:
+  * Fatura aberta
+  * Compra dentro/fora do mês
+  * Parcelas impactando meses futuros
+- Calcula limite restante automaticamente
+
+### Relatórios e gráficos
+
+- Gastos por categoria
+- Tendências mês a mês
+- Evolução do patrimônio
+- Comparação com médias anteriores
+
+### Importação do *open finance*
+
+- Em vez de conectar API manualmente, usar padrão do open finance
+- Permite trazer extratos de qualquer banco com autorização
+
+# Funcionalidades diferenciadas
+
+### Timeline de vida financeira
+
+- Linha do tempo mostrando:
+  * Data de receber salário
+  * Grandes compras
+  * Eventos financeiros (impostos, IPVA, matrícula, assinatura anual)
+
+### Previsão inteligente
+
+- O sistema simula automaticamente:
+  * Saldo previsto no fim do mês
+  * Fluxo futuro baseado em parcelamentos
+  * "Se continuar gastando assim, seu saldo no final será X"
+
+### Chat financeiro interno
+
+Um chat próprio que responde perguntas do tipo:
+- "Quanto gastei em mercado esse mês?"
+- "Mostre meus gastos maiores que R$ 200"
+- "Quais assinaturas tenho cadastradas?"
+
+### Auditoria / histórico de mudanças
+- Log interno:
+  * Transação criada
+  * Alterada
+  * Deletada
+- Útil se você for usar IA para decisões
+
+### Modo anônimo para apresentações
+
+- Oculta valores reais
+- Mantém apenas a estrutura da interface
