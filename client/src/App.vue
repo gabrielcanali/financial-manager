@@ -1,12 +1,14 @@
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, provide, reactive, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import { useFinanceStore } from "./stores/finance";
 
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const YEAR_MONTH_REGEX = /^\d{4}-\d{2}$/;
 const PARCELA_REGEX = /^\d+\/\d+$/;
 const store = useFinanceStore();
+const route = useRoute();
 
 const toast = ref(null);
 let toastTimeout = null;
@@ -35,6 +37,8 @@ const onboardingForm = reactive({
   adiantamento_percentual: "",
 });
 const onboardingErrors = ref([]);
+const invoiceDraft = reactive(defaultInvoice());
+const invoiceErrors = ref([]);
 
 const statusTone = computed(() =>
   store.error
@@ -134,9 +138,133 @@ const apartmentChart = computed(() => {
   return { points, labels };
 });
 
+const spendingAdvice = computed(() => {
+  const available = Number(store.monthSummary?.resultado?.saldo_disponivel || 0);
+  const closingDay = Number(store.config?.fechamento_fatura_dia || 30);
+  const totalDays = daysInMonth(store.year, store.month);
+  const now = new Date();
+  const selectedMonthIndex = Number(store.month) - 1;
+  const isCurrentSelection =
+    now.getFullYear() === Number(store.year) && now.getMonth() === selectedMonthIndex;
+  const today = isCurrentSelection ? Math.min(now.getDate(), totalDays) : 1;
+  const closeAt = Math.min(Math.max(closingDay, 1), totalDays || 30);
+  const daysRemaining = Math.max(closeAt - today, 1);
+
+  return {
+    available,
+    perDay: Number((available / daysRemaining).toFixed(2)),
+    daysRemaining,
+    closesAt: closeAt,
+  };
+});
+
+const nextInvoices = computed(() => {
+  const pools = [
+    ...(store.monthData?.contas_recorrentes_pre_fatura || []),
+    ...(store.monthData?.contas_recorrentes_pos_fatura || []),
+    ...(store.monthData?.entradas_saidas || []),
+  ];
+
+  return pools
+    .map((item) => {
+      const day = parseDayFromIso(item?.data);
+      return {
+        day,
+        data: item?.data,
+        descricao: item?.descricao || "Sem descricao",
+        valor: Number(item?.valor || 0),
+      };
+    })
+    .filter((item) => item.day && item.valor < 0)
+    .sort((a, b) => a.day - b.day)
+    .slice(0, 4);
+});
+
+const dailyFlowChart = computed(() => {
+  const monthData = store.monthData;
+  const totalDays = daysInMonth(store.year, store.month);
+  if (!monthData || !totalDays) return { points: "", labels: [], min: 0, max: 0 };
+
+  const dayTotals = new Array(totalDays).fill(0);
+  const addValue = (item, value) => {
+    const day = parseDayFromIso(item?.data);
+    if (!day || day < 1 || day > totalDays) return;
+    dayTotals[day - 1] += Number(value || 0);
+  };
+
+  (monthData.entradas_saidas || []).forEach((item) => addValue(item, item.valor));
+  (monthData.contas_recorrentes_pre_fatura || []).forEach((item) =>
+    addValue(item, item.valor)
+  );
+  (monthData.contas_recorrentes_pos_fatura || []).forEach((item) =>
+    addValue(item, item.valor)
+  );
+  (monthData.poupanca?.movimentos || []).forEach((item) =>
+    addValue(item, item.tipo === "resgate" ? -item.valor : item.valor)
+  );
+  (monthData.emprestimos?.feitos || []).forEach((item) =>
+    addValue(item, -Number(item.valor || 0))
+  );
+  (monthData.emprestimos?.recebidos || []).forEach((item) =>
+    addValue(item, Number(item.valor || 0))
+  );
+
+  const pointsRaw = [];
+  let running = 0;
+  let min = 0;
+  let max = 0;
+  for (let i = 0; i < dayTotals.length; i += 1) {
+    running += dayTotals[i];
+    min = Math.min(min, running);
+    max = Math.max(max, running);
+    pointsRaw.push({ day: i + 1, value: Number(running.toFixed(2)) });
+  }
+
+  const width = 420;
+  const height = 160;
+  const padding = 16;
+  const step =
+    pointsRaw.length <= 1 ? 0 : (width - padding * 2) / Math.max(pointsRaw.length - 1, 1);
+  const range = max - min || 1;
+  const points = pointsRaw
+    .map((point) => {
+      const x = padding + (point.day - 1) * step;
+      const normalized = (point.value - min) / range;
+      const y = height - padding - normalized * Math.max(height - padding * 2, 1);
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  const sliceEvery = Math.max(Math.ceil(pointsRaw.length / 5), 1);
+  const labels = pointsRaw
+    .filter((_, idx) => idx % sliceEvery === 0 || idx === pointsRaw.length - 1)
+    .map((point) => {
+      const x = padding + (point.day - 1) * step;
+      const normalized = (point.value - min) / range;
+      const y = height - padding - normalized * Math.max(height - padding * 2, 1);
+      return {
+        x,
+        y,
+        ref: `${String(point.day).padStart(2, "0")}/${store.month}`,
+        value: point.value,
+      };
+    });
+
+  return { points, labels, min: Number(min.toFixed(2)), max: Number(max.toFixed(2)) };
+});
+
+const isPlainLayout = computed(() => route.meta?.layout === "plain");
+
 onMounted(() => {
   store.bootstrap();
 });
+
+watch(
+  () => [store.year, store.month, store.config?.fechamento_fatura_dia],
+  () => {
+    resetInvoiceDraft();
+  }
+);
 
 onBeforeUnmount(() => {
   if (toastTimeout) clearTimeout(toastTimeout);
@@ -180,8 +308,37 @@ function defaultLoan() {
   };
 }
 
+function defaultInvoice() {
+  return {
+    data: computeClosingDate(),
+    descricao: "Fatura do cartao",
+    valor: "",
+    parcela: "",
+  };
+}
+
+function daysInMonth(year, month) {
+  const normalizedYear = Number(year);
+  const normalizedMonth = Number(month);
+  if (!Number.isFinite(normalizedYear) || !Number.isFinite(normalizedMonth)) return 30;
+  return new Date(normalizedYear, normalizedMonth, 0).getDate();
+}
+
+function computeClosingDate() {
+  const day = Number(store.config?.fechamento_fatura_dia || 5);
+  const maxDay = daysInMonth(store.year, store.month);
+  const safeDay = Math.min(Math.max(day, 1), maxDay || day || 1);
+  return `${store.year}-${store.month}-${String(safeDay).padStart(2, "0")}`;
+}
+
 function isIsoDate(value) {
   return ISO_DATE_REGEX.test(String(value || ""));
+}
+
+function parseDayFromIso(value) {
+  if (!isIsoDate(value)) return null;
+  const [, , day] = String(value).split("-");
+  return Number(day);
 }
 
 function pushToast(message, tone = "info") {
@@ -235,6 +392,35 @@ function validateEntryForm() {
         errors.push("Parcela total nao pode exceder 36.");
       }
     }
+  }
+
+  return { errors, payload };
+}
+
+function validateInvoiceDraft() {
+  const errors = [];
+  const description = String(invoiceDraft.descricao || "").trim();
+  const rawValue = Number(invoiceDraft.valor);
+  const payload = {
+    data: invoiceDraft.data,
+    descricao: description || "Fatura do cartao",
+    valor: -Math.abs(rawValue),
+    parcela: invoiceDraft.parcela ? invoiceDraft.parcela : null,
+  };
+
+  if (!isIsoDate(payload.data)) {
+    errors.push("Data da fatura deve ser YYYY-MM-DD.");
+  }
+  if (!description) {
+    errors.push("Informe uma descricao para a fatura.");
+  }
+  if (!Number.isFinite(rawValue) || rawValue === 0) {
+    errors.push("Valor da fatura deve ser numerico e diferente de zero.");
+  } else if (Math.abs(rawValue) > 1_000_000) {
+    errors.push("Valor da fatura deve ser menor que 1.000.000 em modulo.");
+  }
+  if (payload.parcela && !PARCELA_REGEX.test(payload.parcela)) {
+    errors.push('Parcela deve seguir o formato "n/m".');
   }
 
   return { errors, payload };
@@ -394,6 +580,23 @@ async function handleCreateBase() {
   }
 }
 
+async function submitInvoice() {
+  const { errors, payload } = validateInvoiceDraft();
+  invoiceErrors.value = errors;
+  if (errors.length) {
+    pushToast("Ajuste a fatura rapida antes de salvar.", "warn");
+    return;
+  }
+  try {
+    await store.createEntry(payload);
+    resetInvoiceDraft();
+    pushToast("Fatura registrada no mes.", "success");
+  } catch (err) {
+    store.error = err.message;
+    pushToast(err.message, "error");
+  }
+}
+
 async function submitEntry() {
   const { errors, payload } = validateEntryForm();
   entryErrors.value = errors;
@@ -448,6 +651,11 @@ function resetEntryForm() {
   entryGenerateFuture.value = false;
   entryCascade.value = false;
   entryErrors.value = [];
+}
+
+function resetInvoiceDraft() {
+  Object.assign(invoiceDraft, defaultInvoice());
+  invoiceErrors.value = [];
 }
 
 async function submitRecurring() {
@@ -608,14 +816,69 @@ async function runImportToApi() {
     pushToast(store.message || "Import concluida.", "success");
   }
 }
+
+const ui = {
+  store,
+  toast,
+  formatCurrency,
+  statusTone,
+  monthCards,
+  annualCards,
+  apartmentChart,
+  dailyFlowChart,
+  spendingAdvice,
+  nextInvoices,
+  importWithBackup,
+  importInput,
+  onboardingForm,
+  onboardingErrors,
+  entryForm,
+  entryGenerateFuture,
+  entryCascade,
+  entryErrors,
+  recurringForm,
+  recurringGenerateFuture,
+  recurringCascade,
+  recurringErrors,
+  savingsDraft,
+  savingsErrors,
+  loanDraft,
+  loanErrors,
+  invoiceDraft,
+  invoiceErrors,
+  editingEntryId,
+  editingRecurring,
+  pushToast,
+  handleYearChange,
+  handleMonthChange,
+  handleCreateBase,
+  submitInvoice,
+  resetInvoiceDraft,
+  submitEntry,
+  selectEntry,
+  removeEntry,
+  resetEntryForm,
+  submitRecurring,
+  selectRecurring,
+  removeRecurring,
+  resetRecurringForm,
+  submitSaving,
+  removeSaving,
+  submitLoan,
+  removeLoan,
+  handleImport,
+  runImportToApi,
+};
+
+provide("financeUi", ui);
 </script>
-
+
 <template>
-  <div class="relative overflow-hidden">
+  <div class="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
     <div class="pointer-events-none absolute inset-0">
-      <div class="absolute left-20 top-14 h-40 w-40 rounded-full bg-accent/20 blur-3xl" />
-      <div class="absolute right-10 top-0 h-36 w-36 rounded-full bg-accentSoft/20 blur-3xl" />
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(148,163,184,0.07),transparent_20%),radial-gradient(circle_at_80%_10%,rgba(94,234,212,0.08),transparent_22%)]" />
+      <div class="absolute left-10 top-14 h-36 w-36 rounded-full bg-accent/20 blur-3xl"></div>
+      <div class="absolute right-10 top-0 h-32 w-32 rounded-full bg-accentSoft/25 blur-3xl"></div>
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(148,163,184,0.07),transparent_20%),radial-gradient(circle_at_80%_10%,rgba(94,234,212,0.08),transparent_22%)]"></div>
     </div>
 
     <div
@@ -630,1032 +893,144 @@ async function runImportToApi() {
       <p class="text-sm font-semibold">{{ toast.message }}</p>
     </div>
 
-    <div class="relative mx-auto max-w-6xl px-6 py-8 space-y-8">
-      <div
-        v-if="!store.statusLoaded"
-        class="glass-panel flex items-center justify-between p-6"
+    <div class="relative mx-auto flex min-h-screen max-w-7xl gap-6 px-6 py-8">
+      <aside
+        v-if="!isPlainLayout"
+        class="glass-panel sticky top-6 h-fit w-64 space-y-4 p-4"
       >
-        <div>
-          <p class="text-sm uppercase text-slate-400">Inicializando</p>
-          <p class="text-lg font-semibold text-slate-50">
-            Carregando status do JSON...
-          </p>
-          <p class="text-xs text-slate-400">{{ store.message }}</p>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-semibold text-slate-50">financial-manager</p>
+            <p class="text-xs uppercase text-slate-400">Front V2</p>
+          </div>
+          <span class="pill bg-white/5 text-xs">v2</span>
         </div>
-        <span class="pill bg-white/5">Aguardando API</span>
-      </div>
-
-      <template v-else-if="!store.hasBase">
-        <section class="glass-panel space-y-4 p-6">
-          <p class="text-sm uppercase text-slate-400">Onboarding / Front V2</p>
-          <h1 class="text-2xl font-semibold text-slate-50">
-            Bem-vindo! Vamos preparar sua base local.
-          </h1>
-          <p class="text-sm text-slate-400">
-            Detectamos que nenhum JSON esta carregado. Importe um arquivo existente ou
-            crie um novo com as configuracoes iniciais de fatura e adiantamento.
+        <nav class="space-y-2 text-sm text-slate-200">
+          <RouterLink
+            to="/"
+            class="flex items-center justify-between rounded-lg px-3 py-2 transition"
+            :class="route.name === 'dashboard' ? 'bg-white/10 text-slate-50' : 'hover:bg-white/5'"
+          >
+            <span>Dashboard</span>
+            <span class="text-[10px] uppercase text-slate-400">home</span>
+          </RouterLink>
+          <RouterLink
+            to="/monthly"
+            class="flex items-center justify-between rounded-lg px-3 py-2 transition"
+            :class="route.name === 'monthly' ? 'bg-white/10 text-slate-50' : 'hover:bg-white/5'"
+          >
+            <span>Mensal</span>
+            <span class="text-[10px] uppercase text-slate-400">crud</span>
+          </RouterLink>
+          <RouterLink
+            to="/recurrents"
+            class="flex items-center justify-between rounded-lg px-3 py-2 transition"
+            :class="route.name === 'recurrents' ? 'bg-white/10 text-slate-50' : 'hover:bg-white/5'"
+          >
+            <span>Recorrentes</span>
+            <span class="text-[10px] uppercase text-slate-400">series</span>
+          </RouterLink>
+          <RouterLink
+            to="/loans"
+            class="flex items-center justify-between rounded-lg px-3 py-2 transition"
+            :class="route.name === 'loans' ? 'bg-white/10 text-slate-50' : 'hover:bg-white/5'"
+          >
+            <span>Emprestimos</span>
+            <span class="text-[10px] uppercase text-slate-400">saldo</span>
+          </RouterLink>
+          <RouterLink
+            to="/apartment"
+            class="flex items-center justify-between rounded-lg px-3 py-2 transition"
+            :class="route.name === 'apartment' ? 'bg-white/10 text-slate-50' : 'hover:bg-white/5'"
+          >
+            <span>Meu apartamento</span>
+            <span class="text-[10px] uppercase text-slate-400">serie</span>
+          </RouterLink>
+        </nav>
+        <div class="rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-slate-300">
+          <p class="font-semibold text-slate-100">Status</p>
+          <p
+            class="mt-1 text-sm font-semibold"
+            :class="store.hasBase ? 'text-emerald-200' : 'text-amber-200'"
+          >
+            {{ store.hasBase ? "JSON carregado" : "Aguardando base" }}
           </p>
-          <div class="flex flex-wrap gap-2 text-xs text-slate-300">
-            <span class="pill bg-white/5">Status: {{ store.message }}</span>
-            <span
-              v-if="store.error"
-              class="pill border border-rose-500/30 bg-rose-500/15 text-rose-100"
-            >
-              Erro: {{ store.error }}
+          <p class="text-slate-400">{{ store.message }}</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span :class="['pill text-[11px]', statusTone]">
+              {{ store.error ? 'Com alerta' : store.loading ? 'Sincronizando' : 'Pronto' }}
             </span>
-          </div>
-          <div class="flex flex-wrap gap-3">
-            <button class="btn" @click="store.bootstrap" :disabled="store.loading">
-              Checar novamente
-            </button>
-            <span class="text-xs text-slate-400">
-              Configure o fechamento da fatura e (opcionalmente) o adiantamento de salario antes de gerar a base.
-            </span>
-          </div>
-        </section>
-
-        <section class="grid gap-4 lg:grid-cols-2">
-          <div class="glass-panel space-y-4 p-5">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs uppercase text-slate-400">Nova base</p>
-                <p class="text-lg font-semibold text-slate-50">Criar JSON vazio</p>
-              </div>
-              <span class="pill bg-white/5">Passo 1</span>
-            </div>
-            <div class="grid gap-3 sm:grid-cols-2">
-              <div class="space-y-1 sm:col-span-2">
-                <p class="text-xs uppercase text-slate-400">Fechamento da fatura (dia)</p>
-                <input
-                  v-model="onboardingForm.fechamento_fatura_dia"
-                  type="number"
-                  min="1"
-                  max="31"
-                  class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-                />
-              </div>
-              <div class="sm:col-span-2">
-                <label class="flex items-center gap-2 text-sm text-slate-300">
-                  <input
-                    type="checkbox"
-                    v-model="onboardingForm.adiantamento_habilitado"
-                    class="accent-accent"
-                  />
-                  Habilitar adiantamento de salario
-                </label>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs uppercase text-slate-400">Dia do adiantamento</p>
-                <input
-                  v-model="onboardingForm.adiantamento_dia"
-                  type="number"
-                  min="1"
-                  max="31"
-                  :disabled="!onboardingForm.adiantamento_habilitado"
-                  class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs uppercase text-slate-400">% adiantado</p>
-                <input
-                  v-model="onboardingForm.adiantamento_percentual"
-                  type="number"
-                  min="1"
-                  max="100"
-                  step="1"
-                  :disabled="!onboardingForm.adiantamento_habilitado"
-                  class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </div>
-            </div>
-            <div
-              v-if="onboardingErrors.length"
-              class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-100"
-            >
-              <p class="font-semibold">Ajuste para continuar:</p>
-              <ul class="list-disc pl-4">
-                <li v-for="err in onboardingErrors" :key="err">{{ err }}</li>
-              </ul>
-            </div>
-            <div class="flex flex-wrap gap-3">
-              <button class="btn" @click="handleCreateBase" :disabled="store.adminLoading">
-                Criar base vazia
-              </button>
-              <button
-                class="btn"
-                @click="store.bootstrap"
-                :disabled="store.loading || store.adminLoading"
-              >
-                Recarregar status
-              </button>
-            </div>
-          </div>
-
-          <div class="glass-panel space-y-4 p-5">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs uppercase text-slate-400">Importar JSON</p>
-                <p class="text-lg font-semibold text-slate-50">Validar e carregar</p>
-              </div>
-              <span class="pill bg-white/5">Passo 2</span>
-            </div>
-            <p class="text-sm text-slate-400">
-              Valide seu arquivo antes de enviar para a API. Aceitamos o export atual com anos/meses, apartamento e configuracoes.
-            </p>
-            <label class="flex items-center gap-2 text-sm text-slate-300">
-              <input type="checkbox" v-model="importWithBackup" class="accent-accent" />
-              Fazer backup automatico antes de substituir
-            </label>
-            <label class="btn w-full cursor-pointer justify-between" for="import-file-onboarding">
-              <span>Selecionar arquivo</span>
-              <input
-                id="import-file-onboarding"
-                type="file"
-                accept="application/json"
-                class="hidden"
-                @change="handleImport"
-              />
-            </label>
-            <div class="rounded-lg border border-white/10 bg-white/5 p-4">
-              <p class="text-sm font-semibold text-slate-50">Validacao</p>
-              <p class="text-xs text-slate-400">
-                {{ store.importFeedback?.message || "Nenhum arquivo lido ainda." }}
-              </p>
-              <ul
-                v-if="store.importFeedback?.warnings?.length"
-                class="mt-2 list-disc space-y-1 pl-4 text-xs text-amber-200"
-              >
-                <li v-for="warn in store.importFeedback.warnings" :key="warn">
-                  {{ warn }}
-                </li>
-              </ul>
-              <ul
-                v-if="store.importFeedback?.errors?.length"
-                class="mt-2 list-disc space-y-1 pl-4 text-xs text-rose-200"
-              >
-                <li v-for="err in store.importFeedback.errors" :key="err">
-                  {{ err }}
-                </li>
-              </ul>
-              <div class="mt-4 flex flex-wrap gap-2">
-                <button
-                  class="btn"
-                  :disabled="!store.importFeedback?.ok || store.adminLoading"
-                  @click="runImportToApi"
-                >
-                  Importar e substituir
-                </button>
-                <button
-                  class="btn"
-                  @click="store.bootstrap"
-                  :disabled="store.loading || store.adminLoading"
-                >
-                  Voltar para status
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-      </template>
-
-      <template v-else>
-        <header class="glass-panel flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
-          <div class="flex items-center gap-4">
-            <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-accent to-accentSoft shadow-card" />
-            <div>
-              <p class="text-lg font-semibold">Financial Manager</p>
-              <p class="text-xs text-slate-400">Vue + Vite + Tailwind + Pinia</p>
-            </div>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button class="btn" @click="store.refreshAll" :disabled="store.loading">
+            <button class="btn px-3 py-2 text-xs" @click="store.refreshAll" :disabled="store.loading">
               Recarregar
             </button>
-            <button class="btn" @click="store.exportSnapshot" :disabled="store.loading">
-              Snapshot local
-            </button>
-            <button class="btn" @click="store.exportFromApi" :disabled="store.adminLoading">
-              Export API
-            </button>
-            <button class="btn" @click="store.backupServer" :disabled="store.adminLoading">
-              Backup servidor
-            </button>
           </div>
-        </header>
+        </div>
+      </aside>
 
-        <section class="glass-panel space-y-4 p-5">
-          <div class="grid gap-3 md:grid-cols-4 md:items-end">
+      <main class="relative flex-1 space-y-4">
+        <div
+          v-if="!store.statusLoaded"
+          class="glass-panel flex items-center justify-between p-5"
+        >
+          <div>
+            <p class="text-sm uppercase text-slate-400">Inicializando</p>
+            <p class="text-lg font-semibold text-slate-50">Carregando status do JSON...</p>
+            <p class="text-xs text-slate-400">{{ store.message }}</p>
+          </div>
+          <span class="pill bg-white/5">Aguardando API</span>
+        </div>
+
+        <template v-else>
+          <header
+            v-if="!isPlainLayout"
+            class="glass-panel flex flex-wrap items-center justify-between gap-4 p-5"
+          >
             <div>
-              <p class="text-xs uppercase text-slate-400">Ano</p>
-              <input
-                v-model="store.year"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm font-semibold outline-none focus:border-accent/60"
-                maxlength="4"
-                @change="handleYearChange"
-              />
-            </div>
-            <div>
-              <p class="text-xs uppercase text-slate-400">Mes</p>
-              <select
-                v-model="store.month"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm font-semibold outline-none focus:border-accent/60"
-                @change="handleMonthChange"
-              >
-                <option
-                  v-for="m in store.monthsAvailable.length ? store.monthsAvailable : Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))"
-                  :key="m"
-                  :value="m"
-                >
-                  {{ m }}
-                </option>
-              </select>
-            </div>
-            <div class="md:col-span-2">
-              <p class="text-xs uppercase text-slate-400">Status</p>
-              <div :class="['pill', statusTone]">
-                <span v-if="store.error">Erro: {{ store.error }}</span>
-                <span v-else-if="store.loading">Sincronizando...</span>
-                <span v-else>OK</span>
-                <span class="text-slate-300">{{ store.message }}</span>
-              </div>
-            </div>
-          </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-xs text-slate-400">Meses disponiveis:</span>
-          <span
-            v-for="m in store.monthsAvailable"
-            :key="m"
-              :class="['pill', m === store.month ? 'border-accent/50 text-accent' : '']"
-            >
-              {{ store.year }}-{{ m }}
-            </span>
-          <span v-if="!store.monthsAvailable.length" class="text-sm text-slate-500">
-            Nenhum mes encontrado para {{ store.year }}.
-          </span>
-        </div>
-        <div class="flex flex-wrap items-center gap-2 text-xs text-slate-300">
-          <span v-if="store.config" class="pill bg-white/5">
-            Fechamento: dia {{ store.config.fechamento_fatura_dia }}
-          </span>
-          <span v-if="store.config?.adiantamento_salario" class="pill bg-white/5">
-            Adiantamento:
-            {{
-              store.config.adiantamento_salario.habilitado
-                ? `${store.config.adiantamento_salario.percentual || 0}% dia ${
-                    store.config.adiantamento_salario.dia || "--"
-                  }`
-                : "Desativado"
-            }}
-          </span>
-        </div>
-      </section>
-
-      <section class="grid gap-4 lg:grid-cols-2">
-        <div class="glass-panel space-y-4 p-5">
-          <div class="flex items-center justify-between">
-            <p class="text-sm uppercase text-slate-400">Resumo do mes</p>
-            <span class="pill bg-white/5"> {{ store.year }}-{{ store.month }} </span>
-          </div>
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div
-              v-for="card in monthCards"
-              :key="card.label"
-              class="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-white/0 to-white/5 p-4 shadow-card"
-            >
-              <p class="text-xs uppercase text-slate-400">{{ card.label }}</p>
-              <p class="text-2xl font-bold text-slate-50">
-                {{ formatCurrency(card.value) }}
-              </p>
-              <p class="text-xs text-slate-500">{{ card.helper }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="glass-panel space-y-4 p-5">
-          <div class="flex items-center justify-between">
-            <p class="text-sm uppercase text-slate-400">Resumo anual</p>
-            <span class="pill bg-white/5">
-              {{ store.yearSummary?.meses?.length || 0 }} meses carregados
-            </span>
-          </div>
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div
-              v-for="card in annualCards"
-              :key="card.label"
-              class="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-white/0 to-white/5 p-4 shadow-card"
-            >
-              <p class="text-xs uppercase text-slate-400">{{ card.label }}</p>
-              <p class="text-2xl font-bold text-slate-50">
-                {{ formatCurrency(card.value) }}
-              </p>
-              <p class="text-xs text-slate-500">{{ card.helper }}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid gap-4 lg:grid-cols-2">
-        <div class="glass-panel p-5">
-          <div class="mb-3 flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold">Entradas e saídas</p>
+              <p class="text-xs uppercase text-slate-400">Dashboard V2</p>
+              <h1 class="text-xl font-semibold text-slate-50">Financial manager</h1>
               <p class="text-xs text-slate-400">
-                Total: {{ formatCurrency(store.sum(store.entries)) }}
+                Navegue entre dashboard, visualizacao mensal, recorrentes, apartamento e emprestimos.
               </p>
             </div>
-            <span class="pill bg-white/5">CRUD de variáveis</span>
-          </div>
-          <div class="overflow-hidden rounded-xl border border-white/5">
-            <table class="w-full text-sm">
-              <thead class="bg-white/5 text-left text-xs uppercase text-slate-400">
-                <tr>
-                  <th class="px-3 py-2">Data</th>
-                  <th class="px-3 py-2">Descrição</th>
-                  <th class="px-3 py-2">Valor</th>
-                  <th class="px-3 py-2">Parcela</th>
-                  <th class="px-3 py-2">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="entry in store.entries"
-                  :key="entry.id || entry.descricao + entry.data"
-                  class="odd:bg-white/0 even:bg-white/5"
-                >
-                  <td class="px-3 py-2 text-slate-200">{{ entry.data }}</td>
-                  <td class="px-3 py-2 text-slate-100">{{ entry.descricao }}</td>
-                  <td
-                    class="px-3 py-2 font-semibold"
-                    :class="entry.valor >= 0 ? 'text-emerald-300' : 'text-rose-300'"
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex gap-3 text-sm text-slate-200">
+                <div class="space-y-1">
+                  <p class="text-xs uppercase text-slate-400">Ano</p>
+                  <input
+                    v-model="store.year"
+                    type="text"
+                    class="w-24 rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+                    @change="handleYearChange"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <p class="text-xs uppercase text-slate-400">Mes</p>
+                  <select
+                    v-model="store.month"
+                    class="w-24 rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+                    @change="handleMonthChange"
                   >
-                    {{ formatCurrency(entry.valor) }}
-                  </td>
-                  <td class="px-3 py-2 text-slate-300">{{ entry.parcela || "-" }}</td>
-                  <td class="px-3 py-2">
-                    <div class="flex gap-2">
-                      <button class="btn px-3 py-1 text-xs" @click="selectEntry(entry)">
-                        Editar
-                      </button>
-                      <button
-                        class="btn px-3 py-1 text-xs"
-                        @click="removeEntry(entry)"
-                        :disabled="store.loading"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="!store.entries.length">
-                  <td colspan="5" class="px-3 py-6 text-center text-slate-500">
-                    Sem movimentações variáveis para este mês.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="glass-panel p-5">
-          <div class="mb-3 flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold">Recorrentes</p>
-              <p class="text-xs text-slate-400">
-                Pré: {{ store.preRecurrents.length }} | Pós: {{ store.postRecurrents.length }}
-              </p>
-            </div>
-            <span class="pill bg-white/5">CRUD recorrentes</span>
-          </div>
-          <div
-            v-if="loanErrors.length"
-            class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-50"
-          >
-            <p class="font-semibold">Revise o emprestimo:</p>
-            <ul class="list-disc pl-4">
-              <li v-for="err in loanErrors" :key="err">{{ err }}</li>
-            </ul>
-          </div>
-          <div class="grid gap-4 md:grid-cols-2">
-            <div>
-              <p class="text-xs uppercase text-slate-400">Até fechamento</p>
-              <div class="overflow-hidden rounded-xl border border-white/5">
-                <table class="w-full text-sm">
-                  <thead class="bg-white/5 text-left text-xs uppercase text-slate-400">
-                    <tr>
-                      <th class="px-3 py-2">Data</th>
-                      <th class="px-3 py-2">Descrição</th>
-                      <th class="px-3 py-2">Valor</th>
-                      <th class="px-3 py-2">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="item in store.preRecurrents"
-                      :key="item.id || item.descricao + item.data"
-                      class="odd:bg-white/0 even:bg-white/5"
-                    >
-                      <td class="px-3 py-2">{{ item.data }}</td>
-                      <td class="px-3 py-2">{{ item.descricao }}</td>
-                      <td class="px-3 py-2 font-semibold text-emerald-200">
-                        {{ formatCurrency(item.valor) }}
-                      </td>
-                      <td class="px-3 py-2">
-                        <div class="flex gap-2">
-                          <button class="btn px-3 py-1 text-xs" @click="selectRecurring(item, 'pre')">
-                            Editar
-                          </button>
-                          <button
-                            class="btn px-3 py-1 text-xs"
-                            @click="removeRecurring(item, 'pre')"
-                          >
-                            Excluir
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr v-if="!store.preRecurrents.length">
-                      <td colspan="4" class="px-3 py-6 text-center text-slate-500">
-                        Nenhum recorrente antes do fechamento.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                    <option v-for="month in store.monthsAvailable" :key="month" :value="month">
+                      {{ month }}
+                    </option>
+                    <option v-if="!store.monthsAvailable.includes(store.month)" :value="store.month">
+                      {{ store.month }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 text-xs">
+                <span class="pill bg-white/5">Status: {{ store.message }}</span>
+                <span :class="['pill', statusTone]">
+                  {{ store.error ? 'Com alerta' : store.loading ? 'Sincronizando' : 'Pronto' }}
+                </span>
               </div>
             </div>
-            <div>
-              <p class="text-xs uppercase text-slate-400">Após fechamento</p>
-              <div class="overflow-hidden rounded-xl border border-white/5">
-                <table class="w-full text-sm">
-                  <thead class="bg-white/5 text-left text-xs uppercase text-slate-400">
-                    <tr>
-                      <th class="px-3 py-2">Data</th>
-                      <th class="px-3 py-2">Descrição</th>
-                      <th class="px-3 py-2">Valor</th>
-                      <th class="px-3 py-2">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="item in store.postRecurrents"
-                      :key="item.id || item.descricao + item.data"
-                      class="odd:bg-white/0 even:bg-white/5"
-                    >
-                      <td class="px-3 py-2">{{ item.data }}</td>
-                      <td class="px-3 py-2">{{ item.descricao }}</td>
-                      <td class="px-3 py-2 font-semibold text-emerald-200">
-                        {{ formatCurrency(item.valor) }}
-                      </td>
-                      <td class="px-3 py-2">
-                        <div class="flex gap-2">
-                          <button class="btn px-3 py-1 text-xs" @click="selectRecurring(item, 'pos')">
-                            Editar
-                          </button>
-                          <button
-                            class="btn px-3 py-1 text-xs"
-                            @click="removeRecurring(item, 'pos')"
-                          >
-                            Excluir
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr v-if="!store.postRecurrents.length">
-                      <td colspan="4" class="px-3 py-6 text-center text-slate-500">
-                        Nenhum recorrente após o fechamento.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid gap-4 lg:grid-cols-2">
-        <div class="glass-panel space-y-4 p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold">
-                Formulário de lançamentos
-                <span v-if="editingEntryId" class="text-xs text-accent"> (editando) </span>
-              </p>
-              <p class="text-xs text-slate-400">
-                Gera parcelas futuras ou cascata de edições.
-              </p>
-            </div>
-            <button class="btn" @click="resetEntryForm">Limpar</button>
-          </div>
-          <div class="grid gap-3 md:grid-cols-2">
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Data</p>
-              <input
-                v-model="entryForm.data"
-                type="date"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Valor</p>
-              <input
-                v-model="entryForm.valor"
-                type="number"
-                step="0.01"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1 md:col-span-2">
-              <p class="text-xs uppercase text-slate-400">Descrição</p>
-              <input
-                v-model="entryForm.descricao"
-                type="text"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Parcela (n/m)</p>
-              <input
-                v-model="entryForm.parcela"
-                type="text"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-                placeholder="02/06"
-              />
-            </div>
-            <div class="flex items-center gap-3">
-              <label class="flex items-center gap-2 text-sm text-slate-300">
-                <input type="checkbox" v-model="entryGenerateFuture" class="accent-accent" />
-                Gerar parcelas futuras
-              </label>
-              <label class="flex items-center gap-2 text-sm text-slate-300">
-                <input type="checkbox" v-model="entryCascade" class="accent-accent" />
-                Cascata (edição de série)
-              </label>
-            </div>
-          </div>
-          <div
-            v-if="entryErrors.length"
-            class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-50"
-          >
-            <p class="font-semibold">Revise antes de salvar:</p>
-            <ul class="list-disc pl-4">
-              <li v-for="err in entryErrors" :key="err">{{ err }}</li>
-            </ul>
-          </div>
-          <div
-            v-if="recurringErrors.length"
-            class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-50"
-          >
-            <p class="font-semibold">Revise o recorrente:</p>
-            <ul class="list-disc pl-4">
-              <li v-for="err in recurringErrors" :key="err">{{ err }}</li>
-            </ul>
-          </div>
-          <div class="flex gap-3">
-            <button class="btn" @click="submitEntry" :disabled="store.loading">
-              {{ editingEntryId ? "Salvar edição" : "Adicionar" }}
-            </button>
-            <button
-              v-if="editingEntryId"
-              class="btn"
-              @click="resetEntryForm"
-            >
-              Cancelar edição
-            </button>
-          </div>
-        </div>
+          </header>
 
-        <div class="glass-panel space-y-4 p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold">
-                Recorrentes / Série
-                <span v-if="editingRecurring" class="text-xs text-accent"> (editando) </span>
-              </p>
-              <p class="text-xs text-slate-400">
-                Pode gerar meses futuros e ajustar série inteira.
-              </p>
-            </div>
-            <button class="btn" @click="resetRecurringForm">Limpar</button>
-          </div>
-          <div class="grid gap-3 md:grid-cols-2">
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Período</p>
-              <select
-                v-model="recurringForm.period"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              >
-                <option value="pre">Pré-fechamento</option>
-                <option value="pos">Pós-fechamento</option>
-              </select>
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Tipo</p>
-              <input
-                v-model="recurringForm.tipo"
-                type="text"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Data</p>
-              <input
-                v-model="recurringForm.data"
-                type="date"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Valor</p>
-              <input
-                v-model="recurringForm.valor"
-                type="number"
-                step="0.01"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1 md:col-span-2">
-              <p class="text-xs uppercase text-slate-400">Descrição</p>
-              <input
-                v-model="recurringForm.descricao"
-                type="text"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1 md:col-span-2">
-              <p class="text-xs uppercase text-slate-400">Termina em (YYYY-MM)</p>
-              <input
-                v-model="recurringForm.termina_em"
-                type="month"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="flex items-center gap-3 md:col-span-2">
-              <label class="flex items-center gap-2 text-sm text-slate-300">
-                <input type="checkbox" v-model="recurringGenerateFuture" class="accent-accent" />
-                Gerar meses futuros
-              </label>
-              <label class="flex items-center gap-2 text-sm text-slate-300">
-                <input type="checkbox" v-model="recurringCascade" class="accent-accent" />
-                Cascata na série
-              </label>
-            </div>
-          </div>
-          <div class="flex gap-3">
-            <button class="btn" @click="submitRecurring" :disabled="store.loading">
-              {{ editingRecurring ? 'Salvar recorrente' : 'Adicionar recorrente' }}
-            </button>
-            <button
-              v-if="editingRecurring"
-              class="btn"
-              @click="resetRecurringForm"
-            >
-              Cancelar edição
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid gap-4 lg:grid-cols-2">
-        <div class="glass-panel space-y-4 p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold">Poupança</p>
-              <p class="text-xs text-slate-400">
-                Movimentos: {{ store.savingsMovements.length }}
-              </p>
-            </div>
-            <span class="pill bg-white/5">
-              {{ formatCurrency(store.monthSummary?.poupanca?.saldo_mes || 0) }}
-            </span>
-          </div>
-          <div class="grid gap-3 md:grid-cols-2">
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Data</p>
-              <input
-                v-model="savingsDraft.data"
-                type="date"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Valor</p>
-              <input
-                v-model="savingsDraft.valor"
-                type="number"
-                step="0.01"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1 md:col-span-2">
-              <p class="text-xs uppercase text-slate-400">Descrição</p>
-              <input
-                v-model="savingsDraft.descricao"
-                type="text"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Tipo</p>
-              <select
-                v-model="savingsDraft.tipo"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              >
-                <option value="aporte">Aporte</option>
-                <option value="resgate">Resgate</option>
-              </select>
-            </div>
-            <div class="flex items-end">
-              <button class="btn w-full" @click="submitSaving">Adicionar</button>
-            </div>
-          </div>
-          <div
-            v-if="savingsErrors.length"
-            class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-50"
-          >
-            <p class="font-semibold">Revise a poupanca:</p>
-            <ul class="list-disc pl-4">
-              <li v-for="err in savingsErrors" :key="err">{{ err }}</li>
-            </ul>
-          </div>
-          <div class="overflow-hidden rounded-xl border border-white/5">
-            <table class="w-full text-sm">
-              <thead class="bg-white/5 text-left text-xs uppercase text-slate-400">
-                <tr>
-                  <th class="px-3 py-2">Data</th>
-                  <th class="px-3 py-2">Descrição</th>
-                  <th class="px-3 py-2">Valor</th>
-                  <th class="px-3 py-2">Tipo</th>
-                  <th class="px-3 py-2">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(item, idx) in store.savingsMovements"
-                  :key="item.id || item.descricao + item.data"
-                  class="odd:bg-white/0 even:bg-white/5"
-                >
-                  <td class="px-3 py-2">{{ item.data }}</td>
-                  <td class="px-3 py-2">{{ item.descricao }}</td>
-                  <td
-                    class="px-3 py-2 font-semibold"
-                    :class="item.tipo === 'aporte' ? 'text-emerald-200' : 'text-rose-300'"
-                  >
-                    {{ formatCurrency(item.valor) }}
-                  </td>
-                  <td class="px-3 py-2">{{ item.tipo }}</td>
-                  <td class="px-3 py-2">
-                    <button class="btn px-3 py-1 text-xs" @click="removeSaving(idx)">
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
-                <tr v-if="!store.savingsMovements.length">
-                  <td colspan="5" class="px-3 py-6 text-center text-slate-500">
-                    Nenhum movimento de poupança.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="glass-panel space-y-4 p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold">Empréstimos</p>
-              <p class="text-xs text-slate-400">
-                Feitos: {{ store.loansMade.length }} | Recebidos: {{ store.loansReceived.length }}
-              </p>
-            </div>
-            <span class="pill bg-white/5">
-              Saldo: {{ formatCurrency(store.monthSummary?.emprestimos?.saldo_mes || 0) }}
-            </span>
-          </div>
-          <div class="grid gap-3 md:grid-cols-2">
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Lado</p>
-              <select
-                v-model="loanDraft.lado"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              >
-                <option value="feito">Feito</option>
-                <option value="recebido">Recebido</option>
-              </select>
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Data</p>
-              <input
-                v-model="loanDraft.data"
-                type="date"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Valor</p>
-              <input
-                v-model="loanDraft.valor"
-                type="number"
-                step="0.01"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="space-y-1 md:col-span-2">
-              <p class="text-xs uppercase text-slate-400">Descrição</p>
-              <input
-                v-model="loanDraft.descricao"
-                type="text"
-                class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-              />
-            </div>
-            <div class="flex items-end md:col-span-2">
-              <button class="btn w-full" @click="submitLoan">Adicionar empréstimo</button>
-            </div>
-          </div>
-
-          <div class="grid gap-4 md:grid-cols-2">
-            <div>
-              <p class="text-xs uppercase text-slate-400">Feitos</p>
-              <div class="overflow-hidden rounded-xl border border-white/5">
-                <table class="w-full text-sm">
-                  <tbody>
-                    <tr
-                      v-for="(item, idx) in store.loansMade"
-                      :key="item.id || item.descricao + item.data"
-                      class="odd:bg-white/0 even:bg-white/5"
-                    >
-                      <td class="px-3 py-2">{{ item.data }}</td>
-                      <td class="px-3 py-2">{{ item.descricao }}</td>
-                      <td class="px-3 py-2 font-semibold text-rose-300">
-                        {{ formatCurrency(item.valor) }}
-                      </td>
-                      <td class="px-3 py-2">
-                        <button class="btn px-3 py-1 text-xs" @click="removeLoan(idx, 'feito')">
-                          Excluir
-                        </button>
-                      </td>
-                    </tr>
-                    <tr v-if="!store.loansMade.length">
-                      <td class="px-3 py-4 text-center text-slate-500">Nenhum empréstimo feito.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div>
-              <p class="text-xs uppercase text-slate-400">Recebidos</p>
-              <div class="overflow-hidden rounded-xl border border-white/5">
-                <table class="w-full text-sm">
-                  <tbody>
-                    <tr
-                      v-for="(item, idx) in store.loansReceived"
-                      :key="item.id || item.descricao + item.data"
-                      class="odd:bg-white/0 even:bg-white/5"
-                    >
-                      <td class="px-3 py-2">{{ item.data }}</td>
-                      <td class="px-3 py-2">{{ item.descricao }}</td>
-                      <td class="px-3 py-2 font-semibold text-emerald-200">
-                        {{ formatCurrency(item.valor) }}
-                      </td>
-                      <td class="px-3 py-2">
-                        <button class="btn px-3 py-1 text-xs" @click="removeLoan(idx, 'recebido')">
-                          Excluir
-                        </button>
-                      </td>
-                    </tr>
-                    <tr v-if="!store.loansReceived.length">
-                      <td class="px-3 py-4 text-center text-slate-500">
-                        Nenhum empréstimo recebido.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid gap-4 lg:grid-cols-2">
-        <div class="glass-panel space-y-4 p-5">
-          <div class="flex items-center justify-between">
-            <p class="text-sm font-semibold">Módulo apartamento</p>
-            <span class="pill bg-white/5">
-              {{ store.apartmentEvolution?.combinada?.length || 0 }} pontos
-            </span>
-          </div>
-          <div class="h-44 w-full overflow-hidden rounded-xl border border-white/10 bg-slate-900/60">
-            <svg v-if="apartmentChart.points" viewBox="0 0 420 160" class="h-full w-full">
-              <defs>
-                <linearGradient id="apt-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#5eead4" />
-                  <stop offset="100%" stop-color="#93c5fd" />
-                </linearGradient>
-              </defs>
-              <polyline
-                :points="apartmentChart.points"
-                fill="none"
-                stroke="url(#apt-grad)"
-                stroke-width="3"
-              />
-              <template v-for="(label, idx) in apartmentChart.labels" :key="idx">
-                <circle :cx="label.x" :cy="label.y" r="4" fill="#5eead4" />
-              </template>
-            </svg>
-            <div
-              v-else
-              class="flex h-full items-center justify-center text-sm text-slate-500"
-            >
-              Sem série de evolução para o ano selecionado.
-            </div>
-          </div>
-          <div class="flex flex-wrap gap-3 text-xs text-slate-300">
-            <span
-              v-for="(label, idx) in apartmentChart.labels"
-              :key="idx"
-              class="pill bg-white/5"
-            >
-              {{ label.ref }}  {{ formatCurrency(label.value) }}
-            </span>
-          </div>
-        </div>
-
-        <div class="glass-panel space-y-4 p-5">
-          <div class="flex items-center justify-between">
-            <p class="text-sm font-semibold">Admin / Operação</p>
-            <span class="pill bg-white/5">Import / Export</span>
-          </div>
-          <div class="grid gap-3 sm:grid-cols-2">
-            <button class="btn w-full" :disabled="store.adminLoading" @click="store.exportFromApi">
-              Exportar base atual
-            </button>
-            <button class="btn w-full" :disabled="store.adminLoading" @click="store.backupServer">
-              Backup rápido
-            </button>
-            <button class="btn w-full" :disabled="store.loading" @click="store.exportSnapshot">
-              Snapshot local (ano)
-            </button>
-            <label class="btn w-full cursor-pointer justify-between" for="import-file">
-              <span>Importar JSON</span>
-              <input
-                id="import-file"
-                ref="importInput"
-                type="file"
-                accept="application/json"
-                class="hidden"
-                @change="handleImport"
-              />
-            </label>
-          </div>
-          <div class="flex items-center gap-2 text-sm text-slate-300">
-            <input type="checkbox" v-model="importWithBackup" class="accent-accent" />
-            Backup automatico antes de importar
-          </div>
-          <div class="rounded-lg border border-white/10 bg-white/5 p-4">
-            <p class="text-sm font-semibold">Feedback</p>
-            <p class="text-xs text-slate-400">
-              {{ store.importFeedback?.message || "Selecione um arquivo para validar antes de enviar para API." }}
-            </p>
-            <ul
-              v-if="store.importFeedback?.warnings?.length"
-              class="mt-2 list-disc space-y-1 pl-4 text-xs text-amber-200"
-            >
-              <li v-for="warn in store.importFeedback.warnings" :key="warn">
-                {{ warn }}
-              </li>
-            </ul>
-            <ul
-              v-if="store.importFeedback?.errors?.length"
-              class="mt-2 list-disc space-y-1 pl-4 text-xs text-rose-200"
-            >
-              <li v-for="err in store.importFeedback.errors" :key="err">
-                {{ err }}
-              </li>
-            </ul>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <span
-                v-if="store.importFeedback"
-                :class="[
-                  'tag',
-                  store.importFeedback.ok
-                    ? 'bg-emerald-500/20 text-emerald-100 border border-emerald-500/30'
-                    : 'bg-rose-500/20 text-rose-100 border border-rose-500/30',
-                ]"
-              >
-                {{ store.importFeedback.ok ? "JSON validado" : "Falha" }}
-              </span>
-              <button
-                v-if="store.importFeedback?.ok"
-                class="btn"
-                @click="runImportToApi"
-                :disabled="store.adminLoading"
-              >
-                Enviar para API
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-    </template>
+          <RouterView />
+        </template>
+      </main>
     </div>
   </div>
 </template>

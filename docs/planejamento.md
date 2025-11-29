@@ -10,6 +10,7 @@
 - Summary service agrega mes/ano (receitas, despesas, saldo disponivel, acumulados de poupanca/emprestimos) com rotas em `months.routes.js` e `years.routes.js`; testes cobrindo meses e resumos.
 - Base JSON inicial em server/data/financeiro.json com estrutura atualizada (poupanca/emprestimos). Front refeito com stack Vite + Vue 3 + Tailwind + Pinia em `client/`, com dashboards mais ricos, proxy de dev para `/api`, CRUD completo (lancamentos, recorrentes, poupanca e emprestimos) e operacoes de admin centralizadas no store.
 - SPA agora usa vue-router com sidebar, guardas de rota (bloqueio sem base), layout por rota (dashboard, apartamento, emprestimos, visao mensal e recorrentes) e breadcrumbs/atalhos entre telas.
+- Dashboard V2 entrega barra de quick actions (fatura e admin), cards de quanto posso gastar/proximas faturas/resumos e grafico de fluxo diario ligado ao store.
 - Modulo apartamento implementado com rotas `/api/apartment` para registrar parcelas Caixa/Construtora, calcular diferenca vs mes anterior, evolucao de saldo devedor e consolidar no resumo mensal/anual.
 - Servidor Express serve o cliente estatico em `/`, priorizando `client/dist` (build do Vite) e caindo para `client/` quando nao houver build; API segue em `/api`. Endpoints de admin adicionados (`/admin/export`, `/admin/import`, `/admin/backup`) para operacao sobre o JSON, agora com logs e opcao de backup automatico no import.
 - Onboarding conectado: `/admin/status`, `/admin/validate` e `/admin/bootstrap` detectam ausencia de base, validam o JSON antes de importar e permitem criar um arquivo inicial com configuracoes (fechamento e adiantamento).
@@ -59,7 +60,8 @@
 - SPA consumindo novas rotas de admin (exportar, backup e importar arquivo lido).
 
 ## Priorizacao atual
-- Fase 9 (Front V2) segue priorizada: onboarding/config entregue, navegacao + sidebar + guardas concluida. Proxima entrega priorizada: Dashboard V2 (cards/quick actions).
+- Fase 9 (Front V2) segue priorizada: onboarding/config + navegacao/sidebar guardada entregues; Dashboard V2 concluido (quick actions, cards, quanto posso gastar, proximas faturas, fluxo diario).
+- Proxima entrega priorizada: Fase 9 - Etapa 5 (Visualizacao mensal e recorrentes com graficos/calendario compartilhados).
 - Fase 8 permanece com pendencias menores (scripts de lint/test e seeds opcionais) para um ciclo rapido posterior.
 
 ## Roteiro da ideia V2 (Front V2 - Fase 9 priorizada)
@@ -75,7 +77,7 @@
 - SPA migrada para vue-router com sidebar e breadcrumbs; rotas dedicadas (Dashboard, Meu Apartamento, Emprestimos, Visualizacao mensal, Recorrentes) e guardas bloqueando acesso sem base carregada.
 - Layout comum com atalhos entre rotas e cards de status; onboarding virou rota isolada que direciona automaticamente apos criar/importar base.
 
-4) Dashboard V2 (alto)
+4) Dashboard V2 (entregue)
 - Quick Action bar para cadastrar fatura e atalho de import/export.
 - Cards: resumo mensal, saldo disponivel/quanto posso gastar, proximas faturas e resumo anual; grafico de fluxo de caixa diario ligado aos dados atuais.
 
