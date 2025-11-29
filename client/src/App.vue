@@ -1,10 +1,20 @@
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { useFinanceStore } from "./stores/finance";
 
+const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const YEAR_MONTH_REGEX = /^\d{4}-\d{2}$/;
+const PARCELA_REGEX = /^\d+\/\d+$/;
 const store = useFinanceStore();
 
+const toast = ref(null);
+let toastTimeout = null;
+const importWithBackup = ref(true);
+const entryErrors = ref([]);
+const recurringErrors = ref([]);
+const savingsErrors = ref([]);
+const loanErrors = ref([]);
 const entryForm = reactive(defaultEntry());
 const entryGenerateFuture = ref(false);
 const entryCascade = ref(false);
@@ -128,6 +138,10 @@ onMounted(() => {
   store.bootstrap();
 });
 
+onBeforeUnmount(() => {
+  if (toastTimeout) clearTimeout(toastTimeout);
+});
+
 function defaultEntry() {
   return {
     data: `${store.year}-${store.month}-01`,
@@ -164,6 +178,151 @@ function defaultLoan() {
     valor: "",
     lado: "feito",
   };
+}
+
+function isIsoDate(value) {
+  return ISO_DATE_REGEX.test(String(value || ""));
+}
+
+function pushToast(message, tone = "info") {
+  if (!message) return;
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toast.value = { message, tone };
+  toastTimeout = setTimeout(() => {
+    toast.value = null;
+  }, 4200);
+}
+
+function validateEntryForm() {
+  const errors = [];
+  const value = Number(entryForm.valor);
+  const description = String(entryForm.descricao || "").trim();
+  const payload = {
+    data: entryForm.data,
+    descricao: description,
+    valor: value,
+    parcela: entryForm.parcela ? entryForm.parcela : null,
+  };
+
+  if (!isIsoDate(payload.data)) {
+    errors.push("Informe uma data valida (YYYY-MM-DD).");
+  }
+
+  if (!description) {
+    errors.push("Descricao obrigatoria.");
+  }
+
+  if (!Number.isFinite(value)) {
+    errors.push("Valor deve ser numerico.");
+  } else if (value === 0) {
+    errors.push("Valor nao pode ser zero.");
+  } else if (Math.abs(value) > 1_000_000) {
+    errors.push("Valor deve ser menor que 1.000.000 em modulo.");
+  }
+
+  if (payload.parcela) {
+    if (!PARCELA_REGEX.test(payload.parcela)) {
+      errors.push('Parcela deve seguir o formato "n/m".');
+    } else {
+      const [currentStr, totalStr] = payload.parcela.split("/");
+      const current = Number(currentStr);
+      const total = Number(totalStr);
+      if (!Number.isInteger(current) || !Number.isInteger(total)) {
+        errors.push("Parcela deve conter numeros inteiros.");
+      } else if (current < 1 || total < 1 || current > total) {
+        errors.push("Parcela deve ter n >= 1 e n <= m.");
+      } else if (total > 36) {
+        errors.push("Parcela total nao pode exceder 36.");
+      }
+    }
+  }
+
+  return { errors, payload };
+}
+
+function validateRecurringForm() {
+  const errors = [];
+  const value = Number(recurringForm.valor);
+  const description = String(recurringForm.descricao || "").trim();
+  const payload = {
+    data: recurringForm.data,
+    descricao: description,
+    valor: value,
+  };
+
+  if (!["pre", "pos"].includes(recurringForm.period)) {
+    errors.push("Selecione pre ou pos-fechamento.");
+  }
+
+  if (!isIsoDate(payload.data)) {
+    errors.push("Informe uma data valida para o recorrente.");
+  }
+
+  if (!description) {
+    errors.push("Descricao obrigatoria no recorrente.");
+  }
+
+  if (!Number.isFinite(value) || value === 0) {
+    errors.push("Valor do recorrente deve ser numerico e diferente de zero.");
+  } else if (Math.abs(value) > 1_000_000) {
+    errors.push("Valor do recorrente deve ser menor que 1.000.000 em modulo.");
+  }
+
+  if (recurringForm.termina_em) {
+    if (!YEAR_MONTH_REGEX.test(recurringForm.termina_em)) {
+      errors.push('Termina em deve seguir o formato "YYYY-MM".');
+    } else {
+      payload.recorrencia = {
+        termina_em: recurringForm.termina_em,
+        tipo: recurringForm.tipo || undefined,
+      };
+    }
+  } else if (recurringForm.tipo) {
+    payload.recorrencia = { tipo: recurringForm.tipo };
+  }
+
+  return { errors, payload };
+}
+
+function validateSavingDraft() {
+  const errors = [];
+  const value = Number(savingsDraft.valor);
+  const description = String(savingsDraft.descricao || "").trim();
+  const movement = {
+    data: savingsDraft.data,
+    descricao: description,
+    valor: value,
+    tipo: savingsDraft.tipo,
+  };
+
+  if (!isIsoDate(movement.data)) {
+    errors.push("Data da poupanca deve ser YYYY-MM-DD.");
+  }
+  if (!description) errors.push("Descricao na poupanca obrigatoria.");
+  if (!Number.isFinite(value) || value <= 0) {
+    errors.push("Valor da poupanca deve ser maior que zero.");
+  }
+
+  return { errors, movement };
+}
+
+function validateLoanDraft() {
+  const errors = [];
+  const value = Number(loanDraft.valor);
+  const description = String(loanDraft.descricao || "").trim();
+  const entry = {
+    data: loanDraft.data,
+    descricao: description,
+    valor: value,
+  };
+
+  if (!isIsoDate(entry.data)) errors.push("Data do emprestimo deve ser YYYY-MM-DD.");
+  if (!description) errors.push("Descricao do emprestimo obrigatoria.");
+  if (!Number.isFinite(value) || value <= 0) {
+    errors.push("Valor do emprestimo deve ser maior que zero.");
+  }
+
+  return { errors, entry };
 }
 
 function validateOnboardingConfig() {
@@ -236,12 +395,13 @@ async function handleCreateBase() {
 }
 
 async function submitEntry() {
-  const payload = {
-    data: entryForm.data,
-    descricao: entryForm.descricao,
-    valor: Number(entryForm.valor),
-    parcela: entryForm.parcela ? entryForm.parcela : null,
-  };
+  const { errors, payload } = validateEntryForm();
+  entryErrors.value = errors;
+  if (errors.length) {
+    pushToast("Revise o lancamento antes de salvar.", "warn");
+    return;
+  }
+  const isEditing = Boolean(editingEntryId.value);
   try {
     if (editingEntryId.value) {
       await store.updateEntry(editingEntryId.value, payload, {
@@ -253,8 +413,10 @@ async function submitEntry() {
       });
     }
     resetEntryForm();
+    pushToast(isEditing ? "Lancamento atualizado." : "Lancamento criado.", "success");
   } catch (err) {
     store.error = err.message;
+    pushToast(err.message, "error");
   }
 }
 
@@ -270,8 +432,14 @@ function selectEntry(entry) {
 
 async function removeEntry(entry) {
   if (!entry.id) return;
-  await store.deleteEntry(entry.id);
-  if (editingEntryId.value === entry.id) resetEntryForm();
+  try {
+    await store.deleteEntry(entry.id);
+    if (editingEntryId.value === entry.id) resetEntryForm();
+    pushToast("Lancamento removido.", "success");
+  } catch (err) {
+    store.error = err.message;
+    pushToast(err.message, "error");
+  }
 }
 
 function resetEntryForm() {
@@ -279,21 +447,18 @@ function resetEntryForm() {
   editingEntryId.value = null;
   entryGenerateFuture.value = false;
   entryCascade.value = false;
+  entryErrors.value = [];
 }
 
 async function submitRecurring() {
-  const payload = {
-    data: recurringForm.data,
-    descricao: recurringForm.descricao,
-    valor: Number(recurringForm.valor),
-  };
-
-  if (recurringForm.termina_em || recurringForm.tipo) {
-    payload.recorrencia = {
-      termina_em: recurringForm.termina_em || null,
-      tipo: recurringForm.tipo || undefined,
-    };
+  const { errors, payload } = validateRecurringForm();
+  recurringErrors.value = errors;
+  if (errors.length) {
+    pushToast("Revise o recorrente antes de salvar.", "warn");
+    return;
   }
+
+  const isEditing = Boolean(editingRecurring.value);
 
   try {
     if (editingRecurring.value) {
@@ -312,8 +477,10 @@ async function submitRecurring() {
       });
     }
     resetRecurringForm();
+    pushToast(isEditing ? "Recorrente atualizado." : "Recorrente criado.", "success");
   } catch (err) {
     store.error = err.message;
+    pushToast(err.message, "error");
   }
 }
 
@@ -331,8 +498,14 @@ function selectRecurring(recurring, period) {
 
 async function removeRecurring(recurring, period) {
   if (!recurring.id) return;
-  await store.deleteRecurring(recurring.id, { period });
-  if (editingRecurring.value?.id === recurring.id) resetRecurringForm();
+  try {
+    await store.deleteRecurring(recurring.id, { period });
+    if (editingRecurring.value?.id === recurring.id) resetRecurringForm();
+    pushToast("Recorrente removido.", "success");
+  } catch (err) {
+    store.error = err.message;
+    pushToast(err.message, "error");
+  }
 }
 
 function resetRecurringForm() {
@@ -340,45 +513,67 @@ function resetRecurringForm() {
   editingRecurring.value = null;
   recurringGenerateFuture.value = true;
   recurringCascade.value = false;
+  recurringErrors.value = [];
 }
 
 async function submitSaving() {
-  const movements = [
-    ...store.savingsMovements,
-    {
-      data: savingsDraft.data,
-      descricao: savingsDraft.descricao,
-      valor: Number(savingsDraft.valor),
-      tipo: savingsDraft.tipo,
-    },
-  ];
-  await store.saveSavings(movements);
-  Object.assign(savingsDraft, defaultSaving());
+  const { errors, movement } = validateSavingDraft();
+  savingsErrors.value = errors;
+  if (errors.length) {
+    pushToast("Corrija a poupanca antes de salvar.", "warn");
+    return;
+  }
+  const movements = [...store.savingsMovements, movement];
+  try {
+    await store.saveSavings(movements);
+    Object.assign(savingsDraft, defaultSaving());
+    savingsErrors.value = [];
+    pushToast("Movimento de poupanca salvo.", "success");
+  } catch (err) {
+    store.error = err.message;
+    pushToast(err.message, "error");
+  }
 }
 
 async function removeSaving(index) {
   const movements = [...store.savingsMovements];
   movements.splice(index, 1);
-  await store.saveSavings(movements);
+  try {
+    await store.saveSavings(movements);
+    pushToast("Movimento removido.", "success");
+  } catch (err) {
+    store.error = err.message;
+    pushToast(err.message, "error");
+  }
 }
 
 async function submitLoan() {
+  const { errors, entry } = validateLoanDraft();
+  loanErrors.value = errors;
+  if (errors.length) {
+    pushToast("Corrija os campos do emprestimo.", "warn");
+    return;
+  }
+
   const feitos = [...store.loansMade];
   const recebidos = [...store.loansReceived];
-  const entry = {
-    data: loanDraft.data,
-    descricao: loanDraft.descricao,
-    valor: Number(loanDraft.valor),
-  };
+  const side = loanDraft.lado === "recebido" ? "recebido" : "feito";
 
-  if (loanDraft.lado === "feito") {
+  if (side === "feito") {
     feitos.push(entry);
   } else {
     recebidos.push(entry);
   }
 
-  await store.saveLoans({ feitos, recebidos });
-  Object.assign(loanDraft, defaultLoan());
+  try {
+    await store.saveLoans({ feitos, recebidos });
+    Object.assign(loanDraft, defaultLoan());
+    loanErrors.value = [];
+    pushToast("Emprestimo registrado.", "success");
+  } catch (err) {
+    store.error = err.message;
+    pushToast(err.message, "error");
+  }
 }
 
 async function removeLoan(index, lado) {
@@ -389,13 +584,29 @@ async function removeLoan(index, lado) {
   } else {
     recebidos.splice(index, 1);
   }
-  await store.saveLoans({ feitos, recebidos });
+  try {
+    await store.saveLoans({ feitos, recebidos });
+    pushToast("Emprestimo removido.", "success");
+  } catch (err) {
+    store.error = err.message;
+    pushToast(err.message, "error");
+  }
 }
 
 function handleImport(event) {
   const file = event.target.files?.[0];
   if (!file) return;
   store.parseImportFile(file);
+}
+
+async function runImportToApi() {
+  store.error = "";
+  await store.sendImportToApi({ backup: importWithBackup.value });
+  if (store.error) {
+    pushToast(store.error, "error");
+  } else {
+    pushToast(store.message || "Import concluida.", "success");
+  }
 }
 </script>
 
@@ -405,6 +616,18 @@ function handleImport(event) {
       <div class="absolute left-20 top-14 h-40 w-40 rounded-full bg-accent/20 blur-3xl" />
       <div class="absolute right-10 top-0 h-36 w-36 rounded-full bg-accentSoft/20 blur-3xl" />
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(148,163,184,0.07),transparent_20%),radial-gradient(circle_at_80%_10%,rgba(94,234,212,0.08),transparent_22%)]" />
+    </div>
+
+    <div
+      v-if="toast"
+      class="fixed right-6 top-6 z-50 max-w-xs rounded-xl border border-white/10 px-4 py-3 shadow-xl backdrop-blur"
+      :class="toast.tone === 'error'
+        ? 'bg-rose-600/30 text-rose-50'
+        : toast.tone === 'success'
+        ? 'bg-emerald-600/25 text-emerald-50'
+        : 'bg-slate-900/80 text-slate-100'"
+    >
+      <p class="text-sm font-semibold">{{ toast.message }}</p>
     </div>
 
     <div class="relative mx-auto max-w-6xl px-6 py-8 space-y-8">
@@ -539,6 +762,10 @@ function handleImport(event) {
             <p class="text-sm text-slate-400">
               Valide seu arquivo antes de enviar para a API. Aceitamos o export atual com anos/meses, apartamento e configuracoes.
             </p>
+            <label class="flex items-center gap-2 text-sm text-slate-300">
+              <input type="checkbox" v-model="importWithBackup" class="accent-accent" />
+              Fazer backup automatico antes de substituir
+            </label>
             <label class="btn w-full cursor-pointer justify-between" for="import-file-onboarding">
               <span>Selecionar arquivo</span>
               <input
@@ -574,7 +801,7 @@ function handleImport(event) {
                 <button
                   class="btn"
                   :disabled="!store.importFeedback?.ok || store.adminLoading"
-                  @click="store.sendImportToApi"
+                  @click="runImportToApi"
                 >
                   Importar e substituir
                 </button>
@@ -799,6 +1026,15 @@ function handleImport(event) {
             </div>
             <span class="pill bg-white/5">CRUD recorrentes</span>
           </div>
+          <div
+            v-if="loanErrors.length"
+            class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-50"
+          >
+            <p class="font-semibold">Revise o emprestimo:</p>
+            <ul class="list-disc pl-4">
+              <li v-for="err in loanErrors" :key="err">{{ err }}</li>
+            </ul>
+          </div>
           <div class="grid gap-4 md:grid-cols-2">
             <div>
               <p class="text-xs uppercase text-slate-400">Até fechamento</p>
@@ -955,6 +1191,24 @@ function handleImport(event) {
                 Cascata (edição de série)
               </label>
             </div>
+          </div>
+          <div
+            v-if="entryErrors.length"
+            class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-50"
+          >
+            <p class="font-semibold">Revise antes de salvar:</p>
+            <ul class="list-disc pl-4">
+              <li v-for="err in entryErrors" :key="err">{{ err }}</li>
+            </ul>
+          </div>
+          <div
+            v-if="recurringErrors.length"
+            class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-50"
+          >
+            <p class="font-semibold">Revise o recorrente:</p>
+            <ul class="list-disc pl-4">
+              <li v-for="err in recurringErrors" :key="err">{{ err }}</li>
+            </ul>
           </div>
           <div class="flex gap-3">
             <button class="btn" @click="submitEntry" :disabled="store.loading">
@@ -1113,6 +1367,15 @@ function handleImport(event) {
             <div class="flex items-end">
               <button class="btn w-full" @click="submitSaving">Adicionar</button>
             </div>
+          </div>
+          <div
+            v-if="savingsErrors.length"
+            class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-50"
+          >
+            <p class="font-semibold">Revise a poupanca:</p>
+            <ul class="list-disc pl-4">
+              <li v-for="err in savingsErrors" :key="err">{{ err }}</li>
+            </ul>
           </div>
           <div class="overflow-hidden rounded-xl border border-white/5">
             <table class="w-full text-sm">
@@ -1343,6 +1606,10 @@ function handleImport(event) {
               />
             </label>
           </div>
+          <div class="flex items-center gap-2 text-sm text-slate-300">
+            <input type="checkbox" v-model="importWithBackup" class="accent-accent" />
+            Backup automatico antes de importar
+          </div>
           <div class="rounded-lg border border-white/10 bg-white/5 p-4">
             <p class="text-sm font-semibold">Feedback</p>
             <p class="text-xs text-slate-400">
@@ -1379,7 +1646,7 @@ function handleImport(event) {
               <button
                 v-if="store.importFeedback?.ok"
                 class="btn"
-                @click="store.sendImportToApi"
+                @click="runImportToApi"
                 :disabled="store.adminLoading"
               >
                 Enviar para API

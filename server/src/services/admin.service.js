@@ -30,6 +30,11 @@ function safeDayInMonth(year, month, day) {
   return safe;
 }
 
+function logAdmin(action, meta = {}) {
+  const payload = JSON.stringify({ action, at: nowIso(), ...meta });
+  console.info(`[admin] ${payload}`);
+}
+
 function buildBaseMonth(year, month, config) {
   const closingDay = safeDayInMonth(
     year,
@@ -68,6 +73,9 @@ function buildBaseMonth(year, month, config) {
 
 async function exportData() {
   const db = await jsonStorage.read();
+  logAdmin("export", {
+    size_bytes: Buffer.byteLength(JSON.stringify(db)),
+  });
   return {
     exported_at: nowIso(),
     db,
@@ -93,16 +101,47 @@ async function getStatus() {
 }
 
 async function validateImport(payload) {
-  return validateDbPayload(payload);
+  const result = validateDbPayload(payload);
+  if ((result.summary?.months || 0) === 0) {
+    result.warnings.push(
+      "Nenhum mes encontrado no JSON; confirme se deseja importar mesmo assim."
+    );
+  }
+  logAdmin("validate", {
+    errors: result.errors.length,
+    warnings: result.warnings.length,
+    months: result.summary?.months || 0,
+    years: result.summary?.years || 0,
+  });
+  return result;
 }
 
-async function importData(payload) {
+async function importData(payload, { backup = false } = {}) {
   const { errors, warnings, normalized, summary } = validateDbPayload(payload);
   if (errors.length) {
     return { errors, warnings, result: null, summary };
   }
 
+  if ((summary?.months || 0) === 0) {
+    warnings.push(
+      "Nenhum mes encontrado no JSON; a base sera sobrescrita com um arquivo vazio."
+    );
+  }
+
+  let backupInfo = null;
+  if (backup) {
+    const current = await jsonStorage.read();
+    if (Object.keys(current).length) {
+      backupInfo = await backupData({ reason: "import" });
+    }
+  }
+
   await jsonStorage.write(normalized);
+  logAdmin("import", {
+    months: summary?.months || 0,
+    years: summary?.years || 0,
+    backup_created: Boolean(backupInfo),
+  });
   return {
     errors: [],
     warnings,
@@ -112,6 +151,7 @@ async function importData(payload) {
       status: "ok",
       size_bytes: Buffer.byteLength(JSON.stringify(normalized)),
       config: normalized.config,
+      backup: backupInfo,
     },
   };
 }
@@ -165,6 +205,7 @@ async function bootstrapData({ config, year, month } = {}) {
   };
 
   await jsonStorage.write(db);
+  logAdmin("bootstrap", { year: targetYear, month: targetMonth });
   return {
     errors: [],
     warnings,
@@ -178,7 +219,7 @@ async function bootstrapData({ config, year, month } = {}) {
   };
 }
 
-async function backupData() {
+async function backupData({ reason, skipLog = false } = {}) {
   const backupDir = getBackupDir();
   await fs.mkdir(backupDir, { recursive: true });
   const db = await jsonStorage.read();
@@ -188,11 +229,20 @@ async function backupData() {
   const dest = path.join(backupDir, filename);
   await fs.writeFile(dest, serialized, "utf-8");
 
-  return {
+  const result = {
     backup_at: nowIso(),
     file: dest,
     size_bytes: Buffer.byteLength(serialized),
+    reason: reason || "manual",
   };
+  if (!skipLog) {
+    logAdmin("backup", {
+      file: dest,
+      size_bytes: result.size_bytes,
+      reason: result.reason,
+    });
+  }
+  return result;
 }
 
 export default {

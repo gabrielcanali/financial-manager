@@ -34,8 +34,9 @@ async function validateImport(req, res, next) {
 async function importData(req, res, next) {
   try {
     const payload = req.body?.data ?? req.body;
+    const doBackup = req.query?.backup !== "false";
     const { errors, warnings, result, summary } =
-      await adminService.importData(payload);
+      await adminService.importData(payload, { backup: doBackup });
     if (errors.length) {
       return res.status(400).json({ errors, warnings, summary });
     }

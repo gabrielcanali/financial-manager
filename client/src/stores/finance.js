@@ -347,18 +347,30 @@ export const useFinanceStore = defineStore("finance", {
         }
       }
     },
-    async sendImportToApi() {
+    async sendImportToApi({ backup = true } = {}) {
       if (!this.importPayload) return;
       this.adminLoading = true;
-      this.message = "Enviando JSON para API...";
+      this.message = backup
+        ? "Enviando JSON e gerando backup..."
+        : "Enviando JSON para API...";
       try {
-        const result = await this.api("/admin/import", {
+        const query = backup ? "?backup=true" : "?backup=false";
+        const result = await this.api(`/admin/import${query}`, {
           method: "POST",
           body: this.importPayload,
         });
-        this.message = "Import concluida. Recarregando painel...";
+        this.message = result.backup?.file
+          ? `Import concluida. Backup em ${result.backup.file}.`
+          : "Import concluida. Recarregando painel...";
         this.hasBase = true;
         this.config = result.config || this.importPayload.config || null;
+        if (result.warnings?.length) {
+          this.importFeedback = {
+            ok: true,
+            message: this.message,
+            warnings: result.warnings,
+          };
+        }
         await this.bootstrap();
       } catch (err) {
         this.error = err.message;

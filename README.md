@@ -4,15 +4,26 @@ API, cliente web e planejamentos para um painel financeiro local usando JSON com
 
 ## Como rodar backend + cliente
 
+Instale dependencias:
+
 ```bash
-cd server
-npm install
-npm run dev   # ou npm start
+cd server && npm install
+cd ../client && npm install
 ```
 
-- A API sobe em `http://localhost:3000/api`.
-- O cliente SPA (Vue via CDN) e servido estaticamente em `http://localhost:3000/` pelo mesmo servidor (recarregar a pagina apos subir o backend).
-- `npm test` roda os testes de unidade do backend.
+Dev:
+```bash
+cd server && npm run dev       # API em http://localhost:3000/api
+cd client && npm run dev       # Vite em http://localhost:5173 com proxy para /api
+```
+
+Build/producao:
+```bash
+cd client && npm run build     # gera client/dist
+cd server && npm start         # serve API e frontend; usa client/dist se existir
+```
+
+- `npm test` (em `server/`) roda os testes de unidade do backend.
 
 
 Variaveis:
@@ -46,7 +57,7 @@ Health check: `GET /health`.
   - `GET /admin/status` - retorna se ha base carregada e a configuracao atual.
   - `GET /admin/export` - devolve o JSON completo atual.
   - `POST /admin/validate` - valida um JSON sem sobrescrever a base.
-  - `POST /admin/import` - sobrescreve o JSON com o corpo enviado.
+  - `POST /admin/import?backup=true|false` - sobrescreve o JSON com o corpo enviado e (por padrao) cria um backup antes.
   - `POST /admin/bootstrap` - cria uma nova base vazia com configuracoes iniciais.
   - `POST /admin/backup` - grava um arquivo de backup em `data/backups/financeiro-<timestamp>.json`.
 

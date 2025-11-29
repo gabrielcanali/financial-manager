@@ -10,7 +10,7 @@
 - Summary service agrega mes/ano (receitas, despesas, saldo disponivel, acumulados de poupanca/emprestimos) com rotas em `months.routes.js` e `years.routes.js`; testes cobrindo meses e resumos.
 - Base JSON inicial em server/data/financeiro.json com estrutura atualizada (poupanca/emprestimos). Front refeito com stack Vite + Vue 3 + Tailwind + Pinia em `client/`, com dashboards mais ricos, proxy de dev para `/api`, CRUD completo (lancamentos, recorrentes, poupanca e emprestimos) e operacoes de admin centralizadas no store.
 - Modulo apartamento implementado com rotas `/api/apartment` para registrar parcelas Caixa/Construtora, calcular diferenca vs mes anterior, evolucao de saldo devedor e consolidar no resumo mensal/anual.
-- Servidor Express tambem serve o cliente estatico em `/`, mantendo API em `/api`. Endpoints de admin adicionados (`/admin/export`, `/admin/import`, `/admin/backup`) para operacao sobre o JSON.
+- Servidor Express serve o cliente estatico em `/`, priorizando `client/dist` (build do Vite) e caindo para `client/` quando nao houver build; API segue em `/api`. Endpoints de admin adicionados (`/admin/export`, `/admin/import`, `/admin/backup`) para operacao sobre o JSON, agora com logs e opcao de backup automatico no import.
 - Onboarding conectado: `/admin/status`, `/admin/validate` e `/admin/bootstrap` detectam ausencia de base, validam o JSON antes de importar e permitem criar um arquivo inicial com configuracoes (fechamento e adiantamento).
 
 ## Alinhamento com a ideia
@@ -58,8 +58,8 @@
 - SPA consumindo novas rotas de admin (exportar, backup e importar arquivo lido).
 
 ## Priorizacao atual
-- Fase 8 (Iteracao de qualidade) passa a ser a proxima entrega, focando em build/lint, proxy/servido de dist e hardening dos endpoints/admin.
-- Fase 9 (Front V2) segue em andamento para consolidar rotas/sidebar, dashboard V2 e telas visuais apos estabilizar o onboarding e configuracoes iniciais.
+- Fase 9 (Front V2) volta a ser a proxima entrega priorizada, apos a iteracao de qualidade (Fase 8) que integrou build/dist no server, validacoes/backup no admin e feedbacks/validacoes basicas na SPA.
+- Fase 8 permanece com pendencias menores (scripts de lint/test e seeds opcionais) para um ciclo rapido posterior.
 
 ## Roteiro da ideia V2 (Front V2 - Fase 9 priorizada)
 1) Onboarding e checagem de base (entregue)
@@ -87,8 +87,10 @@
 - Consolidar componentes para Apartmento/Emprestimos e novos graficos.
 
 ## Fila seguinte (Iteracao de qualidade - Fase 8)
-- Integrar build do Vite ao fluxo do server (servir `/dist`), garantir assets otimizados e proxy de `/api` em producao.
-- Harden dos endpoints de admin (validacoes extra, logs, opcao de backup automatico ao importar).
-- Ajustar feedbacks (toasts/banners) e validar campos de formularios no front (datas, parcelas, limites).
-- Adicionar scripts de lint/test padrao (eslint + testes do store) e exemplos/seeds opcionais para novos usuarios.
+- Pendencias de qualidade rapida: scripts de lint/test padrao (eslint + smoke tests do store) e exemplos/seeds opcionais para novos usuarios iniciais.
+
+## Iteracao de qualidade (Fase 8) entregue
+- Build do Vite integrado ao server: quando existir `client/dist`, o Express serve o bundle otimizado automaticamente (fallback para `client/` em dev).
+- Endpoints de admin com logs e opcao de backup automatico no import (`/admin/import?backup=true|false`), mais validacoes com alerta para JSON sem meses.
+- SPA com toasts/banners de feedback e validacoes locais para formularios de lancamento/recorrentes/poupanca/emprestimos, alem do toggle de backup no fluxo de importacao.
 
