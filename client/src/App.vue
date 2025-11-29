@@ -1,4 +1,4 @@
-
+
 <script setup>
 import { computed, onMounted, reactive, ref } from "vue";
 import { useFinanceStore } from "./stores/finance";
@@ -177,7 +177,7 @@ async function handleMonthChange() {
   store.setMonth(store.month);
   await store.fetchMonth(store.month);
 }
-
+
 async function submitEntry() {
   const payload = {
     data: entryForm.data,
@@ -341,7 +341,7 @@ function handleImport(event) {
   store.parseImportFile(file);
 }
 </script>
-
+
 <template>
   <div class="relative overflow-hidden">
     <div class="pointer-events-none absolute inset-0">
@@ -475,22 +475,22 @@ function handleImport(event) {
         <div class="glass-panel p-5">
           <div class="mb-3 flex items-center justify-between">
             <div>
-              <p class="text-sm font-semibold">Entradas e saídas</p>
+              <p class="text-sm font-semibold">Entradas e saÃ­das</p>
               <p class="text-xs text-slate-400">
                 Total: {{ formatCurrency(store.sum(store.entries)) }}
               </p>
             </div>
-            <span class="pill bg-white/5">CRUD de variáveis</span>
+            <span class="pill bg-white/5">CRUD de variÃ¡veis</span>
           </div>
           <div class="overflow-hidden rounded-xl border border-white/5">
             <table class="w-full text-sm">
               <thead class="bg-white/5 text-left text-xs uppercase text-slate-400">
                 <tr>
                   <th class="px-3 py-2">Data</th>
-                  <th class="px-3 py-2">Descrição</th>
+                  <th class="px-3 py-2">DescriÃ§Ã£o</th>
                   <th class="px-3 py-2">Valor</th>
                   <th class="px-3 py-2">Parcela</th>
-                  <th class="px-3 py-2">Ações</th>
+                  <th class="px-3 py-2">AÃ§Ãµes</th>
                 </tr>
               </thead>
               <tbody>
@@ -525,7 +525,7 @@ function handleImport(event) {
                 </tr>
                 <tr v-if="!store.entries.length">
                   <td colspan="5" class="px-3 py-6 text-center text-slate-500">
-                    Sem movimentações variáveis para este mês.
+                    Sem movimentaÃ§Ãµes variÃ¡veis para este mÃªs.
                   </td>
                 </tr>
               </tbody>
@@ -538,22 +538,22 @@ function handleImport(event) {
             <div>
               <p class="text-sm font-semibold">Recorrentes</p>
               <p class="text-xs text-slate-400">
-                Pré: {{ store.preRecurrents.length }} | Pós: {{ store.postRecurrents.length }}
+                PrÃ©: {{ store.preRecurrents.length }} | PÃ³s: {{ store.postRecurrents.length }}
               </p>
             </div>
             <span class="pill bg-white/5">CRUD recorrentes</span>
           </div>
           <div class="grid gap-4 md:grid-cols-2">
             <div>
-              <p class="text-xs uppercase text-slate-400">Até fechamento</p>
+              <p class="text-xs uppercase text-slate-400">AtÃ© fechamento</p>
               <div class="overflow-hidden rounded-xl border border-white/5">
                 <table class="w-full text-sm">
                   <thead class="bg-white/5 text-left text-xs uppercase text-slate-400">
                     <tr>
                       <th class="px-3 py-2">Data</th>
-                      <th class="px-3 py-2">Descrição</th>
+                      <th class="px-3 py-2">DescriÃ§Ã£o</th>
                       <th class="px-3 py-2">Valor</th>
-                      <th class="px-3 py-2">Ações</th>
+                      <th class="px-3 py-2">AÃ§Ãµes</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -591,15 +591,15 @@ function handleImport(event) {
               </div>
             </div>
             <div>
-              <p class="text-xs uppercase text-slate-400">Após fechamento</p>
+              <p class="text-xs uppercase text-slate-400">ApÃ³s fechamento</p>
               <div class="overflow-hidden rounded-xl border border-white/5">
                 <table class="w-full text-sm">
                   <thead class="bg-white/5 text-left text-xs uppercase text-slate-400">
                     <tr>
                       <th class="px-3 py-2">Data</th>
-                      <th class="px-3 py-2">Descrição</th>
+                      <th class="px-3 py-2">DescriÃ§Ã£o</th>
                       <th class="px-3 py-2">Valor</th>
-                      <th class="px-3 py-2">Ações</th>
+                      <th class="px-3 py-2">AÃ§Ãµes</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -629,7 +629,7 @@ function handleImport(event) {
                     </tr>
                     <tr v-if="!store.postRecurrents.length">
                       <td colspan="4" class="px-3 py-6 text-center text-slate-500">
-                        Nenhum recorrente após o fechamento.
+                        Nenhum recorrente apÃ³s o fechamento.
                       </td>
                     </tr>
                   </tbody>
@@ -639,17 +639,17 @@ function handleImport(event) {
           </div>
         </div>
       </section>
-
+
       <section class="grid gap-4 lg:grid-cols-2">
         <div class="glass-panel space-y-4 p-5">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm font-semibold">
-                Formulário de lançamentos
+                FormulÃ¡rio de lanÃ§amentos
                 <span v-if="editingEntryId" class="text-xs text-accent"> (editando) </span>
               </p>
               <p class="text-xs text-slate-400">
-                Gera parcelas futuras ou cascata de edições.
+                Gera parcelas futuras ou cascata de ediÃ§Ãµes.
               </p>
             </div>
             <button class="btn" @click="resetEntryForm">Limpar</button>
@@ -673,7 +673,7 @@ function handleImport(event) {
               />
             </div>
             <div class="space-y-1 md:col-span-2">
-              <p class="text-xs uppercase text-slate-400">Descrição</p>
+              <p class="text-xs uppercase text-slate-400">DescriÃ§Ã£o</p>
               <input
                 v-model="entryForm.descricao"
                 type="text"
@@ -696,20 +696,20 @@ function handleImport(event) {
               </label>
               <label class="flex items-center gap-2 text-sm text-slate-300">
                 <input type="checkbox" v-model="entryCascade" class="accent-accent" />
-                Cascata (edição de série)
+                Cascata (ediÃ§Ã£o de sÃ©rie)
               </label>
             </div>
           </div>
           <div class="flex gap-3">
             <button class="btn" @click="submitEntry" :disabled="store.loading">
-              {{ editingEntryId ? "Salvar edição" : "Adicionar" }}
+              {{ editingEntryId ? "Salvar ediÃ§Ã£o" : "Adicionar" }}
             </button>
             <button
               v-if="editingEntryId"
               class="btn"
               @click="resetEntryForm"
             >
-              Cancelar edição
+              Cancelar ediÃ§Ã£o
             </button>
           </div>
         </div>
@@ -718,24 +718,24 @@ function handleImport(event) {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm font-semibold">
-                Recorrentes / Série
+                Recorrentes / SÃ©rie
                 <span v-if="editingRecurring" class="text-xs text-accent"> (editando) </span>
               </p>
               <p class="text-xs text-slate-400">
-                Pode gerar meses futuros e ajustar série inteira.
+                Pode gerar meses futuros e ajustar sÃ©rie inteira.
               </p>
             </div>
             <button class="btn" @click="resetRecurringForm">Limpar</button>
           </div>
           <div class="grid gap-3 md:grid-cols-2">
             <div class="space-y-1">
-              <p class="text-xs uppercase text-slate-400">Período</p>
+              <p class="text-xs uppercase text-slate-400">PerÃ­odo</p>
               <select
                 v-model="recurringForm.period"
                 class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
               >
-                <option value="pre">Pré-fechamento</option>
-                <option value="pos">Pós-fechamento</option>
+                <option value="pre">PrÃ©-fechamento</option>
+                <option value="pos">PÃ³s-fechamento</option>
               </select>
             </div>
             <div class="space-y-1">
@@ -764,7 +764,7 @@ function handleImport(event) {
               />
             </div>
             <div class="space-y-1 md:col-span-2">
-              <p class="text-xs uppercase text-slate-400">Descrição</p>
+              <p class="text-xs uppercase text-slate-400">DescriÃ§Ã£o</p>
               <input
                 v-model="recurringForm.descricao"
                 type="text"
@@ -786,7 +786,7 @@ function handleImport(event) {
               </label>
               <label class="flex items-center gap-2 text-sm text-slate-300">
                 <input type="checkbox" v-model="recurringCascade" class="accent-accent" />
-                Cascata na série
+                Cascata na sÃ©rie
               </label>
             </div>
           </div>
@@ -799,7 +799,7 @@ function handleImport(event) {
               class="btn"
               @click="resetRecurringForm"
             >
-              Cancelar edição
+              Cancelar ediÃ§Ã£o
             </button>
           </div>
         </div>
@@ -809,7 +809,7 @@ function handleImport(event) {
         <div class="glass-panel space-y-4 p-5">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-semibold">Poupança</p>
+              <p class="text-sm font-semibold">PoupanÃ§a</p>
               <p class="text-xs text-slate-400">
                 Movimentos: {{ store.savingsMovements.length }}
               </p>
@@ -837,7 +837,7 @@ function handleImport(event) {
               />
             </div>
             <div class="space-y-1 md:col-span-2">
-              <p class="text-xs uppercase text-slate-400">Descrição</p>
+              <p class="text-xs uppercase text-slate-400">DescriÃ§Ã£o</p>
               <input
                 v-model="savingsDraft.descricao"
                 type="text"
@@ -863,10 +863,10 @@ function handleImport(event) {
               <thead class="bg-white/5 text-left text-xs uppercase text-slate-400">
                 <tr>
                   <th class="px-3 py-2">Data</th>
-                  <th class="px-3 py-2">Descrição</th>
+                  <th class="px-3 py-2">DescriÃ§Ã£o</th>
                   <th class="px-3 py-2">Valor</th>
                   <th class="px-3 py-2">Tipo</th>
-                  <th class="px-3 py-2">Ações</th>
+                  <th class="px-3 py-2">AÃ§Ãµes</th>
                 </tr>
               </thead>
               <tbody>
@@ -892,7 +892,7 @@ function handleImport(event) {
                 </tr>
                 <tr v-if="!store.savingsMovements.length">
                   <td colspan="5" class="px-3 py-6 text-center text-slate-500">
-                    Nenhum movimento de poupança.
+                    Nenhum movimento de poupanÃ§a.
                   </td>
                 </tr>
               </tbody>
@@ -903,7 +903,7 @@ function handleImport(event) {
         <div class="glass-panel space-y-4 p-5">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-semibold">Empréstimos</p>
+              <p class="text-sm font-semibold">EmprÃ©stimos</p>
               <p class="text-xs text-slate-400">
                 Feitos: {{ store.loansMade.length }} | Recebidos: {{ store.loansReceived.length }}
               </p>
@@ -941,7 +941,7 @@ function handleImport(event) {
               />
             </div>
             <div class="space-y-1 md:col-span-2">
-              <p class="text-xs uppercase text-slate-400">Descrição</p>
+              <p class="text-xs uppercase text-slate-400">DescriÃ§Ã£o</p>
               <input
                 v-model="loanDraft.descricao"
                 type="text"
@@ -949,7 +949,7 @@ function handleImport(event) {
               />
             </div>
             <div class="flex items-end md:col-span-2">
-              <button class="btn w-full" @click="submitLoan">Adicionar empréstimo</button>
+              <button class="btn w-full" @click="submitLoan">Adicionar emprÃ©stimo</button>
             </div>
           </div>
 
@@ -976,7 +976,7 @@ function handleImport(event) {
                       </td>
                     </tr>
                     <tr v-if="!store.loansMade.length">
-                      <td class="px-3 py-4 text-center text-slate-500">Nenhum empréstimo feito.</td>
+                      <td class="px-3 py-4 text-center text-slate-500">Nenhum emprÃ©stimo feito.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1005,7 +1005,7 @@ function handleImport(event) {
                     </tr>
                     <tr v-if="!store.loansReceived.length">
                       <td class="px-3 py-4 text-center text-slate-500">
-                        Nenhum empréstimo recebido.
+                        Nenhum emprÃ©stimo recebido.
                       </td>
                     </tr>
                   </tbody>
@@ -1019,7 +1019,7 @@ function handleImport(event) {
       <section class="grid gap-4 lg:grid-cols-2">
         <div class="glass-panel space-y-4 p-5">
           <div class="flex items-center justify-between">
-            <p class="text-sm font-semibold">Módulo apartamento</p>
+            <p class="text-sm font-semibold">MÃ³dulo apartamento</p>
             <span class="pill bg-white/5">
               {{ store.apartmentEvolution?.combinada?.length || 0 }} pontos
             </span>
@@ -1046,7 +1046,7 @@ function handleImport(event) {
               v-else
               class="flex h-full items-center justify-center text-sm text-slate-500"
             >
-              Sem série de evolução para o ano selecionado.
+              Sem sÃ©rie de evoluÃ§Ã£o para o ano selecionado.
             </div>
           </div>
           <div class="flex flex-wrap gap-3 text-xs text-slate-300">
@@ -1055,14 +1055,14 @@ function handleImport(event) {
               :key="idx"
               class="pill bg-white/5"
             >
-              {{ label.ref }} — {{ formatCurrency(label.value) }}
+              {{ label.ref }} Â— {{ formatCurrency(label.value) }}
             </span>
           </div>
         </div>
 
         <div class="glass-panel space-y-4 p-5">
           <div class="flex items-center justify-between">
-            <p class="text-sm font-semibold">Admin / Operação</p>
+            <p class="text-sm font-semibold">Admin / OperaÃ§Ã£o</p>
             <span class="pill bg-white/5">Import / Export</span>
           </div>
           <div class="grid gap-3 sm:grid-cols-2">
@@ -1070,7 +1070,7 @@ function handleImport(event) {
               Exportar base atual
             </button>
             <button class="btn w-full" :disabled="store.adminLoading" @click="store.backupServer">
-              Backup rápido
+              Backup rÃ¡pido
             </button>
             <button class="btn w-full" :disabled="store.loading" @click="store.exportSnapshot">
               Snapshot local (ano)
@@ -1118,4 +1118,4 @@ function handleImport(event) {
       </section>
     </div>
   </div>
-</template>
+</template>
