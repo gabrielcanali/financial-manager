@@ -1,5 +1,6 @@
 <script setup>
 import { inject } from "vue";
+import CategoryBadge from "../components/CategoryBadge.vue";
 
 const ui = inject("financeUi");
 </script>
@@ -86,23 +87,33 @@ const ui = inject("financeUi");
             v-for="item in ui.recurringTimeline.slice(0, 8)"
             :key="item.data + item.descricao + item.period"
             class="rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2"
-          >
-            <div class="flex items-center justify-between text-xs text-slate-400">
-              <span>{{ item.data }}</span>
-              <span class="rounded-md bg-white/5 px-2 py-0.5 text-[10px] uppercase text-slate-300">
-                {{ item.period === 'pre' ? 'pre' : 'pos' }}
-              </span>
-            </div>
-            <div class="flex items-center justify-between">
-              <p class="text-slate-200">{{ item.descricao }}</p>
-              <span
-                class="text-sm font-semibold"
-                :class="item.valor >= 0 ? 'text-emerald-200' : 'text-rose-200'"
-              >
-                {{ ui.formatCurrency(item.valor) }}
-              </span>
-            </div>
-          </li>
+            >
+              <div class="flex items-center justify-between text-xs text-slate-400">
+                <span>{{ item.data }}</span>
+                <span class="rounded-md bg-white/5 px-2 py-0.5 text-[10px] uppercase text-slate-300">
+                  {{ item.period === 'pre' ? 'pre' : 'pos' }}
+                </span>
+              </div>
+              <div class="flex items-center justify-between">
+                <p class="text-slate-200">{{ item.descricao }}</p>
+                <span
+                  class="text-sm font-semibold"
+                  :class="item.valor >= 0 ? 'text-emerald-200' : 'text-rose-200'"
+                >
+                  {{ ui.formatCurrency(item.valor) }}
+                </span>
+              </div>
+              <div class="mt-1 flex flex-wrap gap-1 text-[10px] text-slate-400">
+                <CategoryBadge :value="item.categoria || ''" minimal />
+                <span
+                  v-for="tag in item.tags || []"
+                  :key="tag"
+                  class="rounded-full bg-white/5 px-2 py-0.5 uppercase tracking-wide"
+                >
+                  #{{ tag }}
+                </span>
+              </div>
+            </li>
         </ul>
         <p v-else class="text-sm text-slate-500">
           Nenhum recorrente carregado para este mes.
@@ -127,6 +138,61 @@ const ui = inject("financeUi");
           </span>
         </div>
       </div>
+      <div class="space-y-2">
+        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+          <input
+            v-model="ui.recurringFilters.search"
+            type="text"
+            placeholder="Buscar descricao"
+            class="w-full max-w-xs rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+          />
+          <select
+            v-model="ui.recurringFilters.category"
+            class="rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+          >
+            <option value="all">Todas categorias</option>
+            <option value="">Sem categoria</option>
+            <option v-for="cat in ui.categoryPresets" :key="cat.value" :value="cat.value">
+              {{ cat.label }}
+            </option>
+          </select>
+          <select
+            v-model="ui.recurringFilters.flow"
+            class="rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+          >
+            <option value="all">Entradas e saidas</option>
+            <option value="income">Somente entradas</option>
+            <option value="expense">Somente saidas</option>
+          </select>
+          <select
+            v-model="ui.recurringFilters.tag"
+            class="rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+          >
+            <option value="all">Todas tags</option>
+            <option
+              v-for="tag in ui.recurringAvailableTags"
+              :key="tag"
+              :value="tag.toLowerCase()"
+            >
+              {{ tag }}
+            </option>
+          </select>
+          <select
+            v-model="ui.recurringFilters.period"
+            class="rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+          >
+            <option value="all">Pre e pos</option>
+            <option value="pre">Somente pre</option>
+            <option value="pos">Somente pos</option>
+          </select>
+          <button class="btn px-3 py-2 text-xs" @click="ui.resetRecurringFilters">
+            Limpar filtros
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-500">
+          {{ ui.filteredPreRecurrents.length + ui.filteredPostRecurrents.length }} itens visiveis
+        </p>
+      </div>
       <div class="grid gap-4 md:grid-cols-2">
         <div>
           <p class="text-xs uppercase text-slate-400">Ate fechamento</p>
@@ -142,12 +208,24 @@ const ui = inject("financeUi");
               </thead>
               <tbody>
                 <tr
-                  v-for="item in ui.store.preRecurrents"
+                  v-for="item in ui.filteredPreRecurrents"
                   :key="item.id || item.descricao + item.data"
                   class="odd:bg-white/0 even:bg-white/5"
                 >
                   <td class="px-3 py-2">{{ item.data }}</td>
-                  <td class="px-3 py-2">{{ item.descricao }}</td>
+                  <td class="px-3 py-2">
+                    {{ item.descricao }}
+                    <div class="mt-1 flex flex-wrap gap-1 text-[10px] text-slate-400">
+                      <CategoryBadge :value="item.categoria || ''" />
+                      <span
+                        v-for="tag in item.tags || []"
+                        :key="tag"
+                        class="rounded-full bg-white/5 px-2 py-0.5 uppercase tracking-wide"
+                      >
+                        #{{ tag }}
+                      </span>
+                    </div>
+                  </td>
                   <td class="px-3 py-2 font-semibold text-emerald-200">
                     {{ ui.formatCurrency(item.valor) }}
                   </td>
@@ -165,9 +243,13 @@ const ui = inject("financeUi");
                     </div>
                   </td>
                 </tr>
-                <tr v-if="!ui.store.preRecurrents.length">
+                <tr v-if="!ui.filteredPreRecurrents.length">
                   <td colspan="4" class="px-3 py-6 text-center text-slate-500">
-                    Nenhum recorrente antes do fechamento.
+                    {{
+                      ui.recurringFilters.period === "pos"
+                        ? "Filtros ocultaram os recorrentes pre."
+                        : "Nenhum recorrente antes do fechamento."
+                    }}
                   </td>
                 </tr>
               </tbody>
@@ -188,12 +270,24 @@ const ui = inject("financeUi");
               </thead>
               <tbody>
                 <tr
-                  v-for="item in ui.store.postRecurrents"
+                  v-for="item in ui.filteredPostRecurrents"
                   :key="item.id || item.descricao + item.data"
                   class="odd:bg-white/0 even:bg-white/5"
                 >
                   <td class="px-3 py-2">{{ item.data }}</td>
-                  <td class="px-3 py-2">{{ item.descricao }}</td>
+                  <td class="px-3 py-2">
+                    {{ item.descricao }}
+                    <div class="mt-1 flex flex-wrap gap-1 text-[10px] text-slate-400">
+                      <CategoryBadge :value="item.categoria || ''" />
+                      <span
+                        v-for="tag in item.tags || []"
+                        :key="tag"
+                        class="rounded-full bg-white/5 px-2 py-0.5 uppercase tracking-wide"
+                      >
+                        #{{ tag }}
+                      </span>
+                    </div>
+                  </td>
                   <td class="px-3 py-2 font-semibold text-emerald-200">
                     {{ ui.formatCurrency(item.valor) }}
                   </td>
@@ -211,9 +305,13 @@ const ui = inject("financeUi");
                     </div>
                   </td>
                 </tr>
-                <tr v-if="!ui.store.postRecurrents.length">
+                <tr v-if="!ui.filteredPostRecurrents.length">
                   <td colspan="4" class="px-3 py-6 text-center text-slate-500">
-                    Nenhum recorrente apos o fechamento.
+                    {{
+                      ui.recurringFilters.period === "pre"
+                        ? "Filtros ocultaram os recorrentes pos."
+                        : "Nenhum recorrente apos o fechamento."
+                    }}
                   </td>
                 </tr>
               </tbody>
@@ -236,25 +334,25 @@ const ui = inject("financeUi");
         </div>
         <button class="btn" @click="ui.resetRecurringForm">Limpar</button>
       </div>
-      <div class="grid gap-3 md:grid-cols-2">
-        <div class="space-y-1">
-          <p class="text-xs uppercase text-slate-400">Periodo</p>
-          <select
-            v-model="ui.recurringForm.period"
-            class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-          >
-            <option value="pre">Pre-fechamento</option>
-            <option value="pos">Pos-fechamento</option>
-          </select>
-        </div>
-        <div class="space-y-1">
-          <p class="text-xs uppercase text-slate-400">Tipo</p>
-          <input
-            v-model="ui.recurringForm.tipo"
-            type="text"
-            class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-          />
-        </div>
+        <div class="grid gap-3 md:grid-cols-2">
+          <div class="space-y-1">
+            <p class="text-xs uppercase text-slate-400">Periodo</p>
+            <select
+              v-model="ui.recurringForm.period"
+              class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+            >
+              <option value="pre">Pre-fechamento</option>
+              <option value="pos">Pos-fechamento</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <p class="text-xs uppercase text-slate-400">Tipo</p>
+            <input
+              v-model="ui.recurringForm.tipo"
+              type="text"
+              class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+            />
+          </div>
         <div class="space-y-1">
           <p class="text-xs uppercase text-slate-400">Data</p>
           <input
@@ -272,19 +370,40 @@ const ui = inject("financeUi");
             class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
           />
         </div>
-        <div class="space-y-1 md:col-span-2">
-          <p class="text-xs uppercase text-slate-400">Descricao</p>
-          <input
-            v-model="ui.recurringForm.descricao"
-            type="text"
-            class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
-          />
-        </div>
-        <div class="space-y-1 md:col-span-2">
-          <p class="text-xs uppercase text-slate-400">Termina em (YYYY-MM)</p>
-          <input
-            v-model="ui.recurringForm.termina_em"
-            type="month"
+          <div class="space-y-1 md:col-span-2">
+            <p class="text-xs uppercase text-slate-400">Descricao</p>
+            <input
+              v-model="ui.recurringForm.descricao"
+              type="text"
+              class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+            />
+          </div>
+          <div class="space-y-1">
+            <p class="text-xs uppercase text-slate-400">Categoria</p>
+            <select
+              v-model="ui.recurringForm.categoria"
+              class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+            >
+              <option value="">Sem categoria</option>
+              <option v-for="cat in ui.categoryPresets" :key="cat.value" :value="cat.value">
+                {{ cat.label }}
+              </option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <p class="text-xs uppercase text-slate-400">Tags</p>
+            <input
+              v-model="ui.recurringForm.tagsInput"
+              type="text"
+              placeholder="internet, cartao..."
+              class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+            />
+          </div>
+          <div class="space-y-1 md:col-span-2">
+            <p class="text-xs uppercase text-slate-400">Termina em (YYYY-MM)</p>
+            <input
+              v-model="ui.recurringForm.termina_em"
+              type="month"
             class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
           />
         </div>

@@ -7,6 +7,15 @@ import { useFinanceStore } from "./stores/finance";
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const YEAR_MONTH_REGEX = /^\d{4}-\d{2}$/;
 const PARCELA_REGEX = /^\d+\/\d+$/;
+import {
+  CATEGORY_PRESETS,
+  collectTags,
+  guessCategory,
+  normalizeCategory,
+  parseTags,
+  tagsToInput,
+} from "./constants/categories";
+
 const store = useFinanceStore();
 const route = useRoute();
 
@@ -39,6 +48,8 @@ const onboardingForm = reactive({
 const onboardingErrors = ref([]);
 const invoiceDraft = reactive(defaultInvoice());
 const invoiceErrors = ref([]);
+const entryFilters = reactive(defaultEntryFilters());
+const recurringFilters = reactive(defaultRecurringFilters());
 
 const statusTone = computed(() =>
   store.error
@@ -321,12 +332,26 @@ const recurringTimeline = computed(() => {
         data: item.data,
         descricao: item.descricao || "Recorrente",
         valor: Number(item.valor || 0),
+        categoria: item.categoria || "",
+        tags: item.tags || [],
       }));
 
   return [...normalize(store.preRecurrents, "pre"), ...normalize(store.postRecurrents, "pos")].sort(
     (a, b) => a.data.localeCompare(b.data)
   );
 });
+
+const entryAvailableTags = computed(() => collectTags(store.entries));
+const recurringAvailableTags = computed(() =>
+  collectTags([...(store.preRecurrents || []), ...(store.postRecurrents || [])])
+);
+const filteredEntries = computed(() => filterTransactions(store.entries, entryFilters));
+const filteredPreRecurrents = computed(() =>
+  shouldShowRecurringPeriod("pre") ? filterTransactions(store.preRecurrents, recurringFilters) : []
+);
+const filteredPostRecurrents = computed(() =>
+  shouldShowRecurringPeriod("pos") ? filterTransactions(store.postRecurrents, recurringFilters) : []
+);
 
 const isPlainLayout = computed(() => route.meta?.layout === "plain");
 
@@ -336,6 +361,40 @@ watch(
     resetInvoiceDraft();
   }
 );
+
+watch(
+  () => entryForm.descricao,
+  (desc) => {
+    if (entryForm.categoria) return;
+    const suggestion = guessCategory(desc);
+    if (suggestion) {
+      entryForm.categoria = suggestion;
+    }
+  }
+);
+
+watch(
+  () => recurringForm.descricao,
+  (desc) => {
+    if (recurringForm.categoria) return;
+    const suggestion = guessCategory(desc);
+    if (suggestion) {
+      recurringForm.categoria = suggestion;
+    }
+  }
+);
+
+watch(entryAvailableTags, (tags) => {
+  if (entryFilters.tag !== "all" && !tags.includes(entryFilters.tag)) {
+    entryFilters.tag = "all";
+  }
+});
+
+watch(recurringAvailableTags, (tags) => {
+  if (recurringFilters.tag !== "all" && !tags.includes(recurringFilters.tag)) {
+    recurringFilters.tag = "all";
+  }
+});
 
 onBeforeUnmount(() => {
   if (toastTimeout) clearTimeout(toastTimeout);
@@ -347,6 +406,8 @@ function defaultEntry() {
     descricao: "",
     valor: "",
     parcela: "",
+    categoria: "",
+    tagsInput: "",
   };
 }
 
@@ -358,6 +419,27 @@ function defaultRecurring() {
     valor: "",
     termina_em: "",
     tipo: "mensal",
+    categoria: "",
+    tagsInput: "",
+  };
+}
+
+function defaultEntryFilters() {
+  return {
+    search: "",
+    category: "all",
+    flow: "all",
+    tag: "all",
+  };
+}
+
+function defaultRecurringFilters() {
+  return {
+    search: "",
+    category: "all",
+    flow: "all",
+    tag: "all",
+    period: "all",
   };
 }
 
@@ -428,6 +510,56 @@ function summarizeMovements(list = []) {
   );
 }
 
+function filterTransactions(list = [], filters = {}) {
+  const entries = Array.isArray(list) ? list : [];
+  const search = String(filters.search || "").trim().toLowerCase();
+  const rawCategory = filters.category ?? "all";
+  const category =
+    typeof rawCategory === "string" ? rawCategory.toLowerCase() : rawCategory;
+  const hasCategoryFilter =
+    rawCategory !== undefined && rawCategory !== null && rawCategory !== "all";
+  const tag = String(filters.tag || "").toLowerCase();
+  const flow = filters.flow || "all";
+
+  return entries.filter((item) => {
+    const value = Number(item?.valor || 0);
+    if (flow === "income" && value < 0) return false;
+    if (flow === "expense" && value >= 0) return false;
+
+    if (hasCategoryFilter) {
+      const normalizedCategory = String(item?.categoria || "").toLowerCase();
+      if (!category && normalizedCategory) {
+        return false;
+      }
+      if (category && category !== "" && normalizedCategory !== category) {
+        return false;
+      }
+    }
+
+    if (tag && tag !== "all") {
+      const normalizedTags = (item?.tags || []).map((current) =>
+        String(current || "").toLowerCase()
+      );
+      if (!normalizedTags.includes(tag)) {
+        return false;
+      }
+    }
+
+    if (search) {
+      const haystack = `${item?.descricao || ""} ${(item?.tags || []).join(" ")}`.toLowerCase();
+      if (!haystack.includes(search)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
+
+function shouldShowRecurringPeriod(period) {
+  return recurringFilters.period === "all" || recurringFilters.period === period;
+}
+
 function pushToast(message, tone = "info") {
   if (!message) return;
   if (toastTimeout) clearTimeout(toastTimeout);
@@ -446,6 +578,8 @@ function validateEntryForm() {
     descricao: description,
     valor: value,
     parcela: entryForm.parcela ? entryForm.parcela : null,
+    categoria: null,
+    tags: [],
   };
 
   if (!isIsoDate(payload.data)) {
@@ -480,6 +614,11 @@ function validateEntryForm() {
       }
     }
   }
+
+  const normalizedCategory = normalizeCategory(entryForm.categoria);
+  payload.categoria = normalizedCategory || null;
+  const tags = parseTags(entryForm.tagsInput);
+  payload.tags = tags;
 
   return { errors, payload };
 }
@@ -521,6 +660,8 @@ function validateRecurringForm() {
     data: recurringForm.data,
     descricao: description,
     valor: value,
+    categoria: null,
+    tags: [],
   };
 
   if (!["pre", "pos"].includes(recurringForm.period)) {
@@ -553,6 +694,11 @@ function validateRecurringForm() {
   } else if (recurringForm.tipo) {
     payload.recorrencia = { tipo: recurringForm.tipo };
   }
+
+  const normalizedCategory = normalizeCategory(recurringForm.categoria);
+  payload.categoria = normalizedCategory || null;
+  const tags = parseTags(recurringForm.tagsInput);
+  payload.tags = tags;
 
   return { errors, payload };
 }
@@ -717,6 +863,8 @@ function selectEntry(entry) {
     descricao: entry.descricao || "",
     valor: entry.valor ?? "",
     parcela: entry.parcela || "",
+    categoria: entry.categoria || "",
+    tagsInput: tagsToInput(entry.tags || []),
   });
 }
 
@@ -738,6 +886,10 @@ function resetEntryForm() {
   entryGenerateFuture.value = false;
   entryCascade.value = false;
   entryErrors.value = [];
+}
+
+function resetEntryFilters() {
+  Object.assign(entryFilters, defaultEntryFilters());
 }
 
 function resetInvoiceDraft() {
@@ -788,6 +940,8 @@ function selectRecurring(recurring, period) {
     valor: recurring.valor ?? "",
     termina_em: recurring.recorrencia?.termina_em || "",
     tipo: recurring.recorrencia?.tipo || "mensal",
+    categoria: recurring.categoria || "",
+    tagsInput: tagsToInput(recurring.tags || []),
   });
 }
 
@@ -809,6 +963,10 @@ function resetRecurringForm() {
   recurringGenerateFuture.value = true;
   recurringCascade.value = false;
   recurringErrors.value = [];
+}
+
+function resetRecurringFilters() {
+  Object.assign(recurringFilters, defaultRecurringFilters());
 }
 
 async function submitSaving() {
@@ -919,6 +1077,14 @@ const ui = {
   recurringTimeline,
   spendingAdvice,
   nextInvoices,
+  categoryPresets: CATEGORY_PRESETS,
+  entryFilters,
+  recurringFilters,
+  entryAvailableTags,
+  recurringAvailableTags,
+  filteredEntries,
+  filteredPreRecurrents,
+  filteredPostRecurrents,
   importWithBackup,
   importInput,
   onboardingForm,
@@ -949,10 +1115,12 @@ const ui = {
   selectEntry,
   removeEntry,
   resetEntryForm,
+  resetEntryFilters,
   submitRecurring,
   selectRecurring,
   removeRecurring,
   resetRecurringForm,
+  resetRecurringFilters,
   submitSaving,
   removeSaving,
   submitLoan,

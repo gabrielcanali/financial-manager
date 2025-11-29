@@ -1,7 +1,19 @@
 <script setup>
-import { inject } from "vue";
+import { inject, watch } from "vue";
+import { useRouter } from "vue-router";
 
 const ui = inject("financeUi");
+const router = useRouter();
+
+watch(
+  () => ui.store.statusLoaded && ui.store.hasBase,
+  (ready) => {
+    if (ready) {
+      router.replace({ name: "dashboard" });
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>

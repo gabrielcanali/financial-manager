@@ -218,6 +218,49 @@ const ui = inject("financeUi");
         </div>
         <span class="pill bg-white/5">CRUD de variaveis</span>
       </div>
+      <div class="space-y-2">
+        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+          <input
+            v-model="ui.entryFilters.search"
+            type="text"
+            placeholder="Buscar descricao ou tag"
+            class="w-full max-w-xs rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+          />
+          <select
+            v-model="ui.entryFilters.category"
+            class="rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+          >
+            <option value="all">Todas categorias</option>
+            <option value="">Sem categoria</option>
+            <option v-for="cat in ui.categoryPresets" :key="cat.value" :value="cat.value">
+              {{ cat.label }}
+            </option>
+          </select>
+          <select
+            v-model="ui.entryFilters.flow"
+            class="rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+          >
+            <option value="all">Entradas e saidas</option>
+            <option value="income">Somente entradas</option>
+            <option value="expense">Somente saidas</option>
+          </select>
+          <select
+            v-model="ui.entryFilters.tag"
+            class="rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+          >
+            <option value="all">Todas tags</option>
+            <option v-for="tag in ui.entryAvailableTags" :key="tag" :value="tag.toLowerCase()">
+              {{ tag }}
+            </option>
+          </select>
+          <button class="btn px-3 py-2 text-xs" @click="ui.resetEntryFilters">
+            Limpar filtros
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-500">
+          {{ ui.filteredEntries.length }} itens visiveis de {{ ui.store.entries.length }}
+        </p>
+      </div>
       <div class="overflow-hidden rounded-xl border border-white/5">
         <table class="w-full text-sm">
           <thead class="bg-white/5 text-left text-xs uppercase text-slate-400">
@@ -231,12 +274,24 @@ const ui = inject("financeUi");
           </thead>
           <tbody>
             <tr
-              v-for="entry in ui.store.entries"
+              v-for="entry in ui.filteredEntries"
               :key="entry.id || entry.descricao + entry.data"
               class="odd:bg-white/0 even:bg-white/5"
             >
               <td class="px-3 py-2 text-slate-200">{{ entry.data }}</td>
-              <td class="px-3 py-2 text-slate-100">{{ entry.descricao }}</td>
+              <td class="px-3 py-2 text-slate-100">
+                {{ entry.descricao }}
+                <div class="mt-1 flex flex-wrap gap-1 text-[10px] text-slate-400">
+                  <CategoryBadge :value="entry.categoria || ''" />
+                  <span
+                    v-for="tag in entry.tags || []"
+                    :key="tag"
+                    class="rounded-full bg-white/5 px-2 py-0.5 uppercase tracking-wide"
+                  >
+                    #{{ tag }}
+                  </span>
+                </div>
+              </td>
               <td
                 class="px-3 py-2 font-semibold"
                 :class="entry.valor >= 0 ? 'text-emerald-300' : 'text-rose-300'"
@@ -259,9 +314,13 @@ const ui = inject("financeUi");
                 </div>
               </td>
             </tr>
-            <tr v-if="!ui.store.entries.length">
+            <tr v-if="!ui.filteredEntries.length">
               <td colspan="5" class="px-3 py-6 text-center text-slate-500">
-                Sem movimentacoes variaveis para este mes.
+                {{
+                  ui.store.entries.length
+                    ? "Nenhuma movimentacao encontrada para os filtros atuais."
+                    : "Sem movimentacoes variaveis para este mes."
+                }}
               </td>
             </tr>
           </tbody>
@@ -307,6 +366,27 @@ const ui = inject("financeUi");
               v-model="ui.entryForm.descricao"
               type="text"
               class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+            />
+          </div>
+          <div class="space-y-1">
+            <p class="text-xs uppercase text-slate-400">Categoria</p>
+            <select
+              v-model="ui.entryForm.categoria"
+              class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+            >
+              <option value="">Sem categoria</option>
+              <option v-for="cat in ui.categoryPresets" :key="cat.value" :value="cat.value">
+                {{ cat.label }}
+              </option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <p class="text-xs uppercase text-slate-400">Tags (separe por ,)</p>
+            <input
+              v-model="ui.entryForm.tagsInput"
+              type="text"
+              class="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-accent/60"
+              placeholder="cartao, fixo"
             />
           </div>
           <div class="space-y-1">

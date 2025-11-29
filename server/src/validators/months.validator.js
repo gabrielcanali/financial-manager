@@ -7,6 +7,9 @@ const SAVINGS_TYPES = ["aporte", "resgate"];
 
 const MAX_INSTALLMENTS = 36;
 const MAX_ABS_VALUE = 1_000_000;
+const MAX_CATEGORY_LENGTH = 40;
+const MAX_TAGS = 8;
+const MAX_TAG_LENGTH = 24;
 
 function isIsoDate(value) {
   return typeof value === "string" && ISO_DATE_REGEX.test(value);
@@ -318,6 +321,55 @@ function validateMovement(
     }
   } else if (!partial) {
     errors.push("descricao obrigatoria");
+  }
+
+  if (payload.categoria !== undefined) {
+    if (payload.categoria === null || payload.categoria === "") {
+      result.categoria = null;
+    } else if (typeof payload.categoria !== "string") {
+      errors.push("categoria deve ser string ou null");
+    } else {
+      const normalized = payload.categoria.trim();
+      if (!normalized) {
+        result.categoria = null;
+      } else if (normalized.length > MAX_CATEGORY_LENGTH) {
+        errors.push(`categoria deve ter no maximo ${MAX_CATEGORY_LENGTH} caracteres`);
+      } else {
+        result.categoria = normalized;
+      }
+    }
+  } else if (!partial) {
+    result.categoria = null;
+  }
+
+  if (payload.tags !== undefined) {
+    const list = Array.isArray(payload.tags)
+      ? payload.tags
+      : typeof payload.tags === "string"
+      ? payload.tags.split(",")
+      : null;
+    if (!list) {
+      errors.push("tags deve ser lista de strings ou string separada por virgulas");
+    } else {
+      const sanitized = [];
+      list.forEach((tag, index) => {
+        if (sanitized.length >= MAX_TAGS) {
+          return;
+        }
+        const normalized = String(tag ?? "")
+          .trim()
+          .slice(0, MAX_TAG_LENGTH);
+        if (!normalized) return;
+        const exists = sanitized.some(
+          (current) => current.toLowerCase() === normalized.toLowerCase()
+        );
+        if (exists) return;
+        sanitized.push(normalized);
+      });
+      result.tags = sanitized;
+    }
+  } else if (!partial) {
+    result.tags = [];
   }
 
   if (allowParcela) {

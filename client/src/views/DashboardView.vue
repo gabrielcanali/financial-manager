@@ -1,5 +1,6 @@
 <script setup>
 import { inject } from "vue";
+import MetricCard from "../components/MetricCard.vue";
 
 const ui = inject("financeUi");
 </script>
@@ -124,17 +125,11 @@ const ui = inject("financeUi");
           <span class="pill bg-white/5">{{ ui.store.year }}-{{ ui.store.month }}</span>
         </div>
         <div class="grid gap-3 sm:grid-cols-2">
-          <div
-            v-for="card in ui.monthCards"
-            :key="card.label"
-            class="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-white/0 to-white/5 p-4 shadow-card"
-          >
-            <p class="text-xs uppercase text-slate-400">{{ card.label }}</p>
-            <p class="text-2xl font-bold text-slate-50">
+          <MetricCard v-for="card in ui.monthCards" :key="card.label" :label="card.label" :helper="card.helper">
+            <template #value>
               {{ ui.formatCurrency(card.value) }}
-            </p>
-            <p class="text-xs text-slate-500">{{ card.helper }}</p>
-          </div>
+            </template>
+          </MetricCard>
         </div>
       </div>
 
@@ -180,17 +175,11 @@ const ui = inject("financeUi");
           </span>
         </div>
         <div class="grid gap-3 sm:grid-cols-2">
-          <div
-            v-for="card in ui.annualCards"
-            :key="card.label"
-            class="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-white/0 to-white/5 p-4 shadow-card"
-          >
-            <p class="text-xs uppercase text-slate-400">{{ card.label }}</p>
-            <p class="text-2xl font-bold text-slate-50">
+          <MetricCard v-for="card in ui.annualCards" :key="card.label" :label="card.label" :helper="card.helper">
+            <template #value>
               {{ ui.formatCurrency(card.value) }}
-            </p>
-            <p class="text-xs text-slate-500">{{ card.helper }}</p>
-          </div>
+            </template>
+          </MetricCard>
         </div>
       </div>
     </section>

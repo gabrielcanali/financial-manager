@@ -15,6 +15,7 @@
 - Modulo apartamento implementado com rotas `/api/apartment` para registrar parcelas Caixa/Construtora, calcular diferenca vs mes anterior, evolucao de saldo devedor e consolidar no resumo mensal/anual.
 - Servidor Express serve o cliente estatico em `/`, priorizando `client/dist` (build do Vite) e caindo para `client/` quando nao houver build; API segue em `/api`. Endpoints de admin adicionados (`/admin/export`, `/admin/import`, `/admin/backup`) para operacao sobre o JSON, agora com logs e opcao de backup automatico no import.
 - Onboarding conectado: `/admin/status`, `/admin/validate` e `/admin/bootstrap` detectam ausencia de base, validam o JSON antes de importar e permitem criar um arquivo inicial com configuracoes (fechamento e adiantamento).
+- UX V2 com categorizacao/tags nas movimentacoes, filtros reativos (texto, categoria, periodo, tags, tipo) nas telas de Mensal/Recorrentes, badges com cores padronizadas e componentizacao dos cards (MetricCard/CategoryBadge) para manter consistencia visual.
 
 ## Alinhamento com a ideia
 - Organizacao ano/mes, tabelas de entradas/saidas e recorrentes e os resumos mensal/anual (incluindo poupanca/emprestimos e apartamento) ja estao na API.
@@ -61,9 +62,9 @@
 - SPA consumindo novas rotas de admin (exportar, backup e importar arquivo lido).
 
 ## Priorizacao atual
-- Fase 9 (Front V2) segue priorizada: onboarding/config + navegacao/sidebar guardada entregues; Dashboard V2 e a visualizacao mensal/recorrentes (resumos, calendario e fatura) ja estao prontas.
-- Proxima entrega priorizada: Fase 9 - Etapa 6 (UX/categorias/componentizacao) para filtros, tags e feedbacks mais claros em todo o front.
-- Fase 8 permanece com pendencias menores (scripts de lint/test e seeds opcionais) para um ciclo rapido posterior.
+- Fase 9 (Front V2) foi concluida com a entrega da etapa 6: filtros, categorias/tags e componentes reutilizaveis ja estao no ar em Dashboard/Mensal/Recorrentes.
+- Proxima entrega priorizada: reabrir a Fase 8 (Iteracao de qualidade) para scripts de lint/teste e seeds opcionais, garantindo estabilidade antes do hardening da API/admin.
+- Pendencias de operacao pesada (hardening de admin/monitoracao) continuam em backlog para depois do ciclo de qualidade.
 
 ## Roteiro da ideia V2 (Front V2 - Fase 9 priorizada)
 1) Onboarding e checagem de base (entregue)
@@ -85,12 +86,12 @@
 5) Visualizacao mensal e recorrentes (entregue)
 - Resumos compartilhados, grafico de fluxo diario, progresso de fatura pre-fechamento e calendario/timeline combinando variaveis e recorrentes.
 
-6) UX, categorias e componentizacao (alto - proximo)
-- Introduzir categorias/tags e filtros basicos; alinhar feedbacks (toasts/erros) e mensagens de validacao para uso intuitivo.
-- Consolidar componentes para Apartmento/Emprestimos e novos graficos.
+6) UX, categorias e componentizacao (entregue)
+- Categorias/tags opcionais nas movimentacoes, filtros combinados (texto, tipo, tags, categoria, periodo) e feedbacks visuais unificados nas telas de Mensal/Recorrentes.
+- Componentes compartilhados (cards/badges) garantindo consistencia no Dashboard, resumo mensal e timeline de recorrentes.
 
 ## Fila seguinte (Iteracao de qualidade - Fase 8)
-- Pendencias de qualidade rapida: scripts de lint/test padrao (eslint + smoke tests do store) e exemplos/seeds opcionais para novos usuarios iniciais.
+- Pendencias de qualidade rapida: scripts de lint/test padrao (eslint + smoke tests do store) e exemplos/seeds opcionais para novos usuarios iniciais agora se tornam o foco imediato.
 
 ## Iteracao de qualidade (Fase 8) entregue
 - Build do Vite integrado ao server: quando existir `client/dist`, o Express serve o bundle otimizado automaticamente (fallback para `client/` em dev).

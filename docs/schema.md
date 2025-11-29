@@ -64,7 +64,9 @@
   "data": "YYYY-MM-DD",   // data do lancamento
   "valor": -150.75,         // positivo=entrada, negativo=saida
   "descricao": "Conta de luz",
-  "parcela": "2/10"       // ou null, quando parcelado
+  "parcela": "2/10",      // ou null, quando parcelado
+  "categoria": "moradia", // opcional; string curta
+  "tags": ["fixo", "cartao"] // lista opcional de etiquetas
 }
 ```
 Notas:
@@ -72,6 +74,8 @@ Notas:
 - `serie_id` e usado para agrupar e aplicar edicoes em cascata em uma mesma serie de parcelas.
 - O campo `parcela` segue o padrao "n/m" com limites `1 <= n <= m <= 36`; para recorrentes nao deve ser usado.
 - `data` deve pertencer ao mes de referencia informado na rota.
+- `categoria` (string opcional, ate 40 caracteres) facilita filtros no front; quando ausente o valor fica `null`.
+- `tags` (lista de ate 8 strings curtas) permitem sinalizar caracteristicas como `fixo`, `cartao`, `saude`, etc.
 
 ## Tipo `Recorrente`
 Mesmo formato de `Movimentacao`, mas sem `parcela` e com opcional de controle de recorrencia:
@@ -82,6 +86,8 @@ Mesmo formato de `Movimentacao`, mas sem `parcela` e com opcional de controle de
   "data": "YYYY-MM-DD",     // dia de cobranca dentro do mes de referencia
   "valor": -200.00,
   "descricao": "Internet",
+  "categoria": "servicos",    // opcional
+  "tags": ["fixo"],
   "recorrencia": {
     "tipo": "mensal",       // futura extensao: semanal, anual
     "termina_em": "2025-12" // opcional; null para recorrencia aberta
@@ -91,6 +97,7 @@ Mesmo formato de `Movimentacao`, mas sem `parcela` e com opcional de controle de
 Notas:
 - A API gera `serie_id` automaticamente para recorrencias, permitindo aplicacao de edicoes em cascata.
 - `recorrencia.termina_em` deve ser igual ou posterior ao mes de origem quando usado para gerar meses futuros.
+- `categoria` e `tags` seguem o mesmo formato das movimentacoes variaveis e sao opcionais.
 
 ## Tipo `MovimentoPoupanca`
 ```json

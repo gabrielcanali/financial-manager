@@ -144,6 +144,23 @@ function migrateMovement(item, { allowParcela }) {
     migrated.recorrencia = null;
   }
 
+  if (migrated.categoria === undefined) {
+    migrated.categoria = null;
+    changed = true;
+  }
+
+  if (!Array.isArray(migrated.tags)) {
+    const list =
+      typeof migrated.tags === "string"
+        ? migrated.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
+        : [];
+    migrated.tags = list;
+    changed = true;
+  }
+
   return { migrated, changed };
 }
 
