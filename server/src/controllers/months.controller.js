@@ -63,7 +63,11 @@ async function setMonthCalendar(req, res, next) {
   try {
     const { year, month } = req.params;
     const errors = validateYearMonth(year, month);
-    const validation = validateCalendar(req.body, { partial: false });
+    const validation = validateCalendar(req.body, {
+      partial: false,
+      expectedYear: year,
+      expectedMonth: month,
+    });
     const allErrors = [...errors, ...validation.errors];
     if (respondValidation(res, allErrors)) return;
 

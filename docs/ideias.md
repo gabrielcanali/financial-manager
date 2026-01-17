@@ -85,15 +85,15 @@
 
 * Alerta de gastos fora do padrão:
 
-  - “Você gastou X% do seu salário em alimentação”.
-  - “Seus gastos em mercado foram maiores que no mês anterior.”
+  - "Você gastou X% do seu salário em alimentação".
+  - "Seus gastos em mercado foram maiores que no mês anterior."
 
 ### 4.4. Simulação Rápida
 
 * Campo para perguntas automáticas:
 
-  - “Se eu comprar X por 300 reais, qual fica meu saldo?”
-  - “Se parcelar em 3 vezes, como fica meu fluxo futuro?”
+  - "Se eu comprar X por 300 reais, qual fica meu saldo?"
+  - "Se parcelar em 3 vezes, como fica meu fluxo futuro?"
 
 ---
 
@@ -110,9 +110,9 @@
 
 * Sugestão automática de categorias:
 
-  - “MC DONALDS” → alimentação
-  - “UBER” → transporte
-  - “AMAZON” → compras
+  - "MC DONALDS" → alimentação
+  - "UBER" → transporte
+  - "AMAZON" → compras
 
 ### 5.3. Controle de Cartão de Crédito
 
@@ -145,15 +145,15 @@ Linha do tempo exibindo:
 * Simulação automática do saldo futuro.
 * Projeção baseada nos padrões de gasto:
 
-  - “Se continuar assim, seu saldo será X no fim do mês.”
+  - "Se continuar assim, seu saldo será X no fim do mês."
 
 ### 6.3. Chat Financeiro Interno
 
 Responde perguntas como:
 
-* “Quanto gastei no mercado esse mês?”
-* “Mostre gastos acima de R$ 200.”
-* “Quais assinaturas tenho cadastradas?”
+* "Quanto gastei no mercado esse mês?"
+* "Mostre gastos acima de R$ 200."
+* "Quais assinaturas tenho cadastradas?"
 
 ### 6.4. Auditoria e Histórico
 

@@ -10,6 +10,11 @@ const MAX_ABS_VALUE = 1_000_000;
 const MAX_CATEGORY_LENGTH = 40;
 const MAX_TAGS = 8;
 const MAX_TAG_LENGTH = 24;
+const RECURRING_FIELDS = ["tipo", "termina_em"];
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
 
 function isIsoDate(value) {
   return typeof value === "string" && ISO_DATE_REGEX.test(value);
@@ -50,6 +55,11 @@ function validateDados(payload = {}, { partial = false } = {}) {
   const errors = [];
   const result = {};
 
+  if (!isPlainObject(payload)) {
+    errors.push("dados deve ser um objeto");
+    return { errors, value: result };
+  }
+
   if (payload.adiantamento !== undefined) {
     const num = Number(payload.adiantamento);
     if (!Number.isFinite(num)) {
@@ -79,9 +89,21 @@ function validateDados(payload = {}, { partial = false } = {}) {
   return { errors, value: result };
 }
 
-function validateCalendar(payload = {}, { partial = false } = {}) {
+function validateCalendar(
+  payload = {},
+  { partial = false, expectedYear, expectedMonth } = {}
+) {
   const errors = [];
   const result = {};
+  const expectedYearStr =
+    expectedYear !== undefined ? String(expectedYear).padStart(4, "0") : null;
+  const expectedMonthStr =
+    expectedMonth !== undefined ? String(expectedMonth).padStart(2, "0") : null;
+
+  if (!isPlainObject(payload)) {
+    errors.push("calendario deve ser um objeto");
+    return { errors, value: result };
+  }
 
   if (payload.pagamentos !== undefined) {
     if (!Array.isArray(payload.pagamentos)) {
@@ -91,7 +113,25 @@ function validateCalendar(payload = {}, { partial = false } = {}) {
       if (invalid.length) {
         errors.push("pagamentos contem datas invalidas (usar YYYY-MM-DD)");
       } else {
-        result.pagamentos = payload.pagamentos;
+        const sanitized = payload.pagamentos;
+        if (expectedYearStr && expectedMonthStr) {
+          const outOfRange = sanitized
+            .map((d, index) => ({ d, index }))
+            .filter(({ d }) => {
+              const [yyyy, mm] = d.split("-");
+              return yyyy !== expectedYearStr || mm !== expectedMonthStr;
+            });
+          if (outOfRange.length) {
+            const { index } = outOfRange[0];
+            errors.push(
+              `pagamentos[${index}] deve estar no mes ${expectedYearStr}-${expectedMonthStr}`
+            );
+          } else {
+            result.pagamentos = sanitized;
+          }
+        } else {
+          result.pagamentos = sanitized;
+        }
       }
     }
   } else if (!partial) {
@@ -104,6 +144,15 @@ function validateCalendar(payload = {}, { partial = false } = {}) {
       !isIsoDate(payload.fechamento_fatura)
     ) {
       errors.push("fechamento_fatura deve ser data ISO ou null");
+    } else if (expectedYearStr && expectedMonthStr && payload.fechamento_fatura) {
+      const [yyyy, mm] = payload.fechamento_fatura.split("-");
+      if (yyyy !== expectedYearStr || mm !== expectedMonthStr) {
+        errors.push(
+          `fechamento_fatura deve estar no mes ${expectedYearStr}-${expectedMonthStr}`
+        );
+      } else {
+        result.fechamento_fatura = payload.fechamento_fatura;
+      }
     } else {
       result.fechamento_fatura = payload.fechamento_fatura;
     }
@@ -121,6 +170,11 @@ function validateCalendar(payload = {}, { partial = false } = {}) {
 function validateSavings(payload = {}, { partial = false, expectedYear, expectedMonth } = {}) {
   const errors = [];
   const result = {};
+
+  if (!isPlainObject(payload)) {
+    errors.push("poupanca deve ser um objeto");
+    return { errors, value: result };
+  }
 
   const validateMovement = (movement, index) => {
     const movementErrors = [];
@@ -196,6 +250,11 @@ function validateLoans(payload = {}, { partial = false, expectedYear, expectedMo
   const errors = [];
   const result = {};
 
+  if (!isPlainObject(payload)) {
+    errors.push("emprestimos deve ser um objeto");
+    return { errors, value: result };
+  }
+
   const validateList = (list, key) => {
     if (!Array.isArray(list)) {
       errors.push(`${key} deve ser uma lista`);
@@ -267,6 +326,18 @@ function validateLoans(payload = {}, { partial = false, expectedYear, expectedMo
   return { errors, value: result };
 }
 
+function isEmptyRecorrencia(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const keys = Object.keys(value);
+  if (!keys.length) return true;
+  return keys.every((key) => {
+    if (!RECURRING_FIELDS.includes(key)) return false;
+    const raw = value[key];
+    if (raw === null || raw === undefined) return true;
+    return typeof raw === "string" ? !raw.trim() : false;
+  });
+}
+
 function validateMovement(
   payload = {},
   {
@@ -282,6 +353,11 @@ function validateMovement(
 ) {
   const errors = [];
   const result = {};
+
+  if (!isPlainObject(payload)) {
+    errors.push("lancamento deve ser um objeto");
+    return { errors, value: result };
+  }
 
   if (payload.data !== undefined) {
     if (!isIsoDate(payload.data)) {
@@ -406,8 +482,14 @@ function validateMovement(
   }
 
   if (payload.recorrencia !== undefined) {
-    if (!allowRecorrencia) {
-      errors.push("recorrencia nao permitida neste recurso");
+    if (payload.recorrencia === null) {
+      result.recorrencia = null;
+    } else if (!allowRecorrencia) {
+      if (isEmptyRecorrencia(payload.recorrencia)) {
+        result.recorrencia = null;
+      } else {
+        errors.push("recorrencia nao permitida neste recurso");
+      }
     } else if (payload.recorrencia !== null && typeof payload.recorrencia !== "object") {
       errors.push("recorrencia deve ser objeto ou null");
     } else if (payload.recorrencia) {

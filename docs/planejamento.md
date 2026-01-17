@@ -1,101 +1,83 @@
 # Planejamento do financial-manager
 
 ## Visao geral da ideia
-- Painel financeiro local em JSON para estudo/uso pessoal, focado em importacao/exportacao simples e sem backend externo.
-- Organizacao por anos com abas de meses; cada mes traz dados salariais, calendario, movimentacoes, recorrentes, dashboard e infos do apartamento.
+- Painel financeiro local em JSON para estudo/uso pessoal, com importacao/exportacao simples e sem dependencia de backend externo publico.
+- Organizacao anual/mensal com dados salariais, calendario, movimentacoes variaveis, recorrentes, poupanca, emprestimos e consolidado do apartamento para cada mes.
 
 ## Estado atual do repositorio
-- API Express (server/src/server.js) com rotas /api/months e /api/years; validacoes reforcadas (year/month, datas no mes, valores limitados, parcelas 1..36).
-- Service de meses com CRUD para dados, calendario, entradas/saidas, recorrentes e agora poupanca/emprestimos; migra legados gerando `id`, agrupa series via `serie_id`, gera parcelas/recorrencias futuras sob demanda e recalcula `total_liquido`.
-- Summary service agrega mes/ano (receitas, despesas, saldo disponivel, acumulados de poupanca/emprestimos) com rotas em `months.routes.js` e `years.routes.js`; testes cobrindo meses e resumos.
-- Base JSON inicial em server/data/financeiro.json com estrutura atualizada (poupanca/emprestimos). Front refeito com stack Vite + Vue 3 + Tailwind + Pinia em `client/`, com dashboards mais ricos, proxy de dev para `/api`, CRUD completo (lancamentos, recorrentes, poupanca e emprestimos) e operacoes de admin centralizadas no store.
-- SPA agora usa vue-router com sidebar, guardas de rota (bloqueio sem base), layout por rota (dashboard, apartamento, emprestimos, visao mensal e recorrentes) e breadcrumbs/atalhos entre telas.
-- Dashboard V2 entrega barra de quick actions (fatura e admin), cards de quanto posso gastar/proximas faturas/resumos e grafico de fluxo diario ligado ao store.
-- Visualizacao mensal/recorrentes V2 traz resumos compartilhados, calendario de lancamentos, progresso da fatura pre-fechamento e timeline de recorrentes junto aos formularios de variaveis/poupanca.
-- Modulo apartamento implementado com rotas `/api/apartment` para registrar parcelas Caixa/Construtora, calcular diferenca vs mes anterior, evolucao de saldo devedor e consolidar no resumo mensal/anual.
-- Servidor Express serve o cliente estatico em `/`, priorizando `client/dist` (build do Vite) e caindo para `client/` quando nao houver build; API segue em `/api`. Endpoints de admin adicionados (`/admin/export`, `/admin/import`, `/admin/backup`) para operacao sobre o JSON, agora com logs e opcao de backup automatico no import.
-- Onboarding conectado: `/admin/status`, `/admin/validate` e `/admin/bootstrap` detectam ausencia de base, validam o JSON antes de importar e permitem criar um arquivo inicial com configuracoes (fechamento e adiantamento).
-- UX V2 com categorizacao/tags nas movimentacoes, filtros reativos (texto, categoria, periodo, tags, tipo) nas telas de Mensal/Recorrentes, badges com cores padronizadas e componentizacao dos cards (MetricCard/CategoryBadge) para manter consistencia visual.
+- API Express (`server/src/server.js`) com rotas `/api/months`, `/api/years` e `/api/apartment`, cobrindo CRUD de meses, resumo anual/mensal, poupanca, emprestimos e apartamento com validacoes de ano/mes, datas, valores e limites de parcela (1..36).
+- Services de meses/anos fazem migracao de registros legados (gerando `id`/`serie_id`), reprocessam `total_liquido`, geram parcelas ou recorrencias futuras sob demanda e expoem agregadores usados pelos resumos; testes de service garantem os contratos basicos.
+- Base JSON (`server/data/financeiro.json`) atualizada com poupanca/emprestimos e bloco de configuracoes; endpoints de admin (`/admin/export`, `/admin/import`, `/admin/backup`, `/admin/status`, `/admin/validate`, `/admin/bootstrap`) permitem operar o arquivo local com logs simples e validacoes antes de importar.
+- Front-end foi resetado e reconstruido com Vite + Vue 3 + Tailwind + Pinia (`client/`), entregando navegacao ano/mes, consumo das rotas da API, CRUD de lancamentos/recorrentes/poupanca/emprestimos e formularios basicos para admin; layout, feedbacks visuais e graficos seguem sem refinamento.
+- SPA utiliza vue-router e um layout unico com sidebar e breadcrumb simples; o guard de rota bloqueia acesso sem base carregada, mas ainda ha friccoes de UX (componentes placeholders, hierarquia visual inconsistente e ausencia de microfeedbacks).
 
 ## Alinhamento com a ideia
-- Organizacao ano/mes, tabelas de entradas/saidas e recorrentes e os resumos mensal/anual (incluindo poupanca/emprestimos e apartamento) ja estao na API.
-- API cobre fluxo financeiro, apartamento e operacoes de export/import/backup; UI basica entregue com navegacao ano/mes e dashboards mensais/anuais.
-- Ainda faltam refinamentos visuais/feedbacks da SPA e um ciclo de build/teste integrado (lint, etc.).
-- Validacoes iniciais de datas/parcelas/limites estao presentes; rotinas de admin agora expostas e precisam de hardening/monitoracao futura.
-- Onboarding do front cobre o caso sem JSON, validando o arquivo local antes do import e permitindo bootstrap de base com configuracao inicial.
+- Base tecnica e funcional (API + SPA) cobre o fluxo de dados do caderno de ideias: anos/meses, apartamento, recorrentes, poupanca e emprestimos.
+- Onboarding e operacoes de admin ja permitem subir, validar e exportar a base local, garantindo o ciclo CRUD completo.
+- UX segue crua: graficos, quick actions e cards ainda usam placeholders, nao ha iteracao de ergonomia e falta revisar nomenclaturas, responsividade e orientacao contextual.
+- Nenhuma fase de UX refinada ou avancada foi executada; graficos inteligentes, sugestoes automaticas e quick actions inteligentes continuam no backlog.
 
-## Sintese da ideia V2 (Front e onboarding)
-- Tela de boas vindas exibida quando nao houver JSON carregado, oferecendo importar um arquivo existente ou criar uma nova base com configuracao inicial.
-- Configuracoes iniciais: data de fechamento da fatura, indicacao de adiantamento de salario, dia do adiantamento e percentual adiantado, gravadas junto ao JSON criado/carregado.
-- Barra lateral com rotas: Dashboard (Quick Action para cadastrar fatura, cards de resumo mensal, saldo disponivel/quanto posso gastar, proximas faturas, resumo anual e grafico de fluxo de caixa diario), Meu Apartamento, Emprestimos, Visualizacao mensal (resumos, graficos e calendario) e Contas recorrentes.
-- Objetivos funcionais: uso intuitivo, categorizacao de contas, acompanhamento da progressao das faturas e do saldo de recorrentes e componentizacao das paginas.
+## Estado do front reconstruido
+- Estrutura principal: sidebar fixa, header com seletores de ano/mes, paginas para Dashboard, Mensal, Recorrentes, Emprestimos e Apartamento.
+- Componentes compartilham formularios baseados em Tailwind, com validacoes alinhadas a API (datas do mes, valores limitados, terminologia de parcelas e recorrencias).
+- Feedback atual limita-se a toasts genericos do store e loaders simples; nao ha onboarding guiado, estados vazios polidos, graficos refinados ou automacoes de UX.
 
-## Roteiro sugerido de desenvolvimento
-1) Fundacao e contrato de dados (concluido)
-- Schema documentado em `docs/schema.md`, validacoes iniciais aplicadas nas rotas, CRUD basico implementado e testes de service.
+## Roteiro de desenvolvimento e status
+### Fases concluidas
+1) **Fundacao e contrato de dados (concluida)**  
+Schema em `docs/schema.md`, validacoes iniciais nas rotas e CRUD basico com testes para os services.
 
-2) Fluxo de meses e recorrencias (entregue)
-- Calculo automatico de totais por mes (saldo, total liquido), parcelamento com geracao de parcelas futuras (1..36) e serie (`serie_id`) para edicao em cascata.
-- Recorrencias com geracao ate `termina_em`, atualizacao em cascata e migracao de IDs legados.
+2) **Fluxo de meses e recorrencias (concluida)**  
+Calculo de totais mensais, geracao de parcelas (1..36), cascade por `serie_id` e recorrencias com `termina_em`.
 
-3) Dashboard e resumos (entregue)
-- Agregadores mensais/anuais com saldo disponivel, poupanca acumulada e emprestimos (endpoints `/months/:year/:month/summary` e `/years/:year/summary`).
-- Rotas para registrar poupanca e emprestimos por mes, mantendo validacoes e IDs para edicao futura.
-- Tests, README e schema atualizados. Export/import de JSON e backups ficam para a etapa de entrega/operacao.
+3) **Dashboard e resumos na API (concluida)**  
+Agregadores mensais/anuais para variaveis, recorrentes, poupanca, emprestimos e apartamento, expondo `/months/:year/:month/summary` e `/years/:year/summary`.
 
-4) Modulo apartamento (entregue)
-- Endpoints `PUT/GET /apartment/:year/:month` para registrar parcelas Caixa e Construtora por mes, calculando diferenca versus mes anterior e variacao de saldo devedor.
-- Serie de evolucao em `/apartment/evolution` para grafico consolidado e injecao de totais no resumo mensal/anual.
+4) **Modulo apartamento (concluida)**  
+Rotas `GET/PUT /apartment/:year/:month` e `/apartment/evolution`, consolidando Caixa + Construtora nos resumos.
 
-5) Cliente web (entregue - iterar UI)
-- Primeira SPA (Vue via CDN) com filtros de ano/mes, resumos mensais/anuais, tabelas de entradas/recorrentes/poupanca/emprestimos e cards do modulo apartamento com grafico SVG simples da evolucao.
-- Exportacao local de snapshot (meses carregados + resumo anual + evolucao do apartamento) e import/export via API de admin (enviar JSON completo, gerar backup, baixar estado atual).
+5) **Cliente web reconstruido (concluida)**  
+SPA Vite + Vue 3 + Tailwind + Pinia reimplementada com navegacao ano/mes, CRUD de lancamentos/recorrentes/poupanca/emprestimos e operacoes de admin conectadas; UX propositalmente basica aguardando desk check.
 
-6) Front modernizado (entregue)
-- Migracao para Vite + Vue 3 + Tailwind + Pinia, separando build, aplicando proxy local para `/api` e organizando layout em paineis com cartoes e formulario de operacao.
-- Pinia centraliza carregamento de ano/mes, resumos, import/export/backup e CRUDs de lancamentos, recorrentes, poupanca e emprestimos.
+### Fases planejadas (em aberto)
+**Fase X - Desk Check Funcional e UX (em preparacao)**  
+- Revisao modulo a modulo  
+- Validacao de comportamento de telas  
+- Levantamento de friccoes de UX  
+- Registro de ajustes necessarios  
+- Coleta de decisoes do usuario  
+- Nenhuma implementacao nesta fase
 
-7) Entrega e operacao (entregue - primeira versao)
-- Servidor agora serve o cliente estatico e adiciona rotas `/admin/export`, `/admin/import`, `/admin/backup`.
-- README atualizado com comandos e rotas; server aceita JSON maior (limite 5mb) e exposicao do caminho do DB para backups.
-- SPA consumindo novas rotas de admin (exportar, backup e importar arquivo lido).
+**Fase 6 - UX Refinada (Ergonomia e Usabilidade) (nao iniciada)**  
+- Correcao de acentuacao e nomenclaturas visuais  
+- Revisao do seletor de mes/ano (input -> select/combobox)  
+- Reorganizacao do seletor de periodo (header ou sidebar)  
+- Simplificacao de formularios de data (informar apenas o dia quando aplicavel)  
+- Automatizacao de entrada/saida (tipo define o sinal do valor)  
+- Unificacao visual da tela de recorrentes (pre/pos fatura apenas no backend)  
+- Ajustes de formularios conforme a ideia original  
+- Ajustes gerais de layout, responsividade e repeticao visual  
+- Comportamento automatico de onboarding quando nao existir JSON
+
+**Fase 7 - Hardening e operacao (nao iniciada)**  
+- Automatizar lint/testes (front e API) e smoke tests do store.  
+- Endurecer rotas de admin/import/export/backup com logs claros e monitoracao basica.  
+- Preparar seeds/snapshots para onboarding rapido e documentar procedimentos operacionais.
+
+**Fase 8 - UX Avancada e Inteligencia (nao iniciada)**  
+- Graficos avancados no dashboard  
+- Sugestoes automatizadas (categorias, alertas, padroes)  
+- Quick Actions inteligentes  
+- Simulacoes e projecoes financeiras  
+- Comportamentos derivados da timeline financeira  
+- Analises automaticas com base nos dados existentes
 
 ## Priorizacao atual
-- Fase 9 (Front V2) segue entregue; esta iteracao fechou a Fase 8 (Iteracao de qualidade) com refinamento do front (componentizacao de graficos/contexts, limpeza e correcoes de layout).
-- Proxima entrega priorizada: Fase 10 (Hardening/operacao) para automatizar lint/testes, fortalecer rotas de admin/backup e preparar seeds/snapshots seguros para onboarding rapido.
-- Backlog mantem itens de monitoracao/logs mais profundos e hardening de operacao para apos o ciclo de qualidade.
+- Consolidar o front reconstruido (testes manuais e checklist funcional) antes de qualquer melhoria visual.
+- Preparar material de suporte (roteiros de teste, prints e definicoes de modulos) para executar a Fase X.
+- Bloquear implementacoes de UX ate que o desk check registre os ajustes e decisoes do usuario.
 
-## Roteiro da ideia V2 (Front V2 - entregue)
-1) Onboarding e checagem de base (entregue)
-- Detectar ausencia de JSON e exibir tela de boas vindas com importacao ou criacao; validar JSON importado (schema + erros claros) antes de carregar via `/admin/validate`.
-- Criar base nova com defaults (ano/mes atual, salario zerado, recorrentes vazios) e iniciar carregamento/estado no store com `/admin/bootstrap`.
-
-2) Configuracoes iniciais e persistencia (entregue)
-- Coletar data de fechamento da fatura e parametros de adiantamento (flag, dia, percentual) com validacao de ranges.
-- Persistir configuracoes no JSON e no store, expondo via API/admin; ajustar import/export/backup para incluir e restaurar o bloco de configuracao.
-
-3) Navegacao e barra lateral (entregue)
-- SPA migrada para vue-router com sidebar e breadcrumbs; rotas dedicadas (Dashboard, Meu Apartamento, Emprestimos, Visualizacao mensal, Recorrentes) e guardas bloqueando acesso sem base carregada.
-- Layout comum com atalhos entre rotas e cards de status; onboarding virou rota isolada que direciona automaticamente apos criar/importar base.
-
-4) Dashboard V2 (entregue)
-- Quick Action bar para cadastrar fatura e atalho de import/export.
-- Cards: resumo mensal, saldo disponivel/quanto posso gastar, proximas faturas e resumo anual; grafico de fluxo de caixa diario ligado aos dados atuais.
-
-5) Visualizacao mensal e recorrentes (entregue)
-- Resumos compartilhados, grafico de fluxo diario, progresso de fatura pre-fechamento e calendario/timeline combinando variaveis e recorrentes.
-
-6) UX, categorias e componentizacao (entregue)
-- Categorias/tags opcionais nas movimentacoes, filtros combinados (texto, tipo, tags, categoria, periodo) e feedbacks visuais unificados nas telas de Mensal/Recorrentes.
-- Componentes compartilhados (cards/badges) garantindo consistencia no Dashboard, resumo mensal e timeline de recorrentes.
-
-## Fila seguinte (Fase 10 - Hardening / operacao)
-- Automatizar lint/testes (front e API) e smoke tests do store, acoplando aos scripts padrao e preparando CI local.
-- Endurecer operacoes de admin/import/export/backup com logs claros e monitoracao basica para detectar falhas.
-- Publicar seeds/exemplos opcionais para novos usuarios subirem uma base de teste rapidamente.
-
-## Iteracao de qualidade (Fase 8) entregue
-- Front refinado com componente reutilizavel de grafico de linhas (SimpleLineChart) para Dashboard/Mensal/Apartamento e helper `useFinanceUi` centralizando o contexto, reduzindo duplicacao e melhorando legibilidade.
-- Correcoes de layout e carregamento: bootstrap garantido ao montar o App, Suspense/fallback no RouterView e import ausente sanado (CategoryBadge), eliminando o caso em que so apareciam sidebar + header.
-- Codigo morto removido e preparacao para proxima fase de qualidade (scripts automatizados e seeds) mantendo o store/fluxos intactos.
-
+## Backlog imediato e dependencias para o desk check
+- Revisar JSON base para garantir dados cobrindo todos os modulos (variaveis, recorrentes, poupanca, emprestimos, apartamento).
+- Listar criterios de aceite por modulo (Dashboard, Mensal, Recorrentes, Emprestimos, Apartamento, Admin/onboarding) a serem usados pelo proximo agente.
+- Confirmar se endpoints criticos (`/admin/*`, `/months`, `/years`, `/apartment`) estao acessiveis no ambiente local e documentar eventuais passos extras (ex.: seeds manuais).

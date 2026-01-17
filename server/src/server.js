@@ -21,6 +21,18 @@ const staticDir = fs.existsSync(path.join(distDir, "index.html"))
 app.use(cors());
 app.use(express.json({ limit: "5mb" }));
 
+// Responde 400 para JSON malformado em vez de 500 genérico
+app.use((err, req, res, next) => {
+  if (err?.type === "entity.parse.failed" || err instanceof SyntaxError) {
+    console.error("Erro ao fazer parse do JSON:", err.message);
+    return res.status(400).json({
+      error: "Payload JSON invalido",
+      detail: err.message,
+    });
+  }
+  next(err);
+});
+
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });

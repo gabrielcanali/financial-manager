@@ -1,23 +1,28 @@
+/** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{vue,js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Space Grotesk"', "Inter", "system-ui", "sans-serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
       },
       colors: {
-        midnight: "#0b1224",
-        ink: "#0f172a",
-        accent: "#5eead4",
-        accentSoft: "#93c5fd",
-      },
-      boxShadow: {
-        card: "0 18px 45px rgba(0, 0, 0, 0.35)",
-      },
-      borderRadius: {
-        xl: "14px",
+        ink: {
+          900: "#0f172a",
+          700: "#1f2937",
+          500: "#4b5563",
+          300: "#94a3b8",
+        },
+        mint: {
+          500: "#2dd4bf",
+          400: "#5eead4",
+          200: "#ccfbf1",
+        },
       },
     },
   },
   plugins: [],
-};
+}

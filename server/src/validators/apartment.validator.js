@@ -3,6 +3,10 @@ import { validateYearMonth } from "./months.validator.js";
 const MAX_INSTALLMENT_VALUE = 1_000_000;
 const MAX_DEBT_VALUE = 10_000_000;
 
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
 function validateInstallment(entry, key) {
   const errors = [];
   if (entry === null) return { errors, value: null };
@@ -56,6 +60,13 @@ function validateInstallment(entry, key) {
 function validateApartmentPayload(payload = {}) {
   const errors = [];
   const result = {};
+
+  if (!isPlainObject(payload)) {
+    errors.push(
+      "payload deve ser um objeto com financiamento_caixa e/ou entrada_construtora"
+    );
+    return { errors, value: result };
+  }
 
   ["financiamento_caixa", "entrada_construtora"].forEach((key) => {
     if (payload[key] === undefined) return;

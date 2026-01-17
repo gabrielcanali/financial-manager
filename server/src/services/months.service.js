@@ -4,9 +4,24 @@ import jsonStorage from "../lib/jsonStorage.js";
 const MAX_INSTALLMENTS = 36;
 const DEFAULT_RECURRING_MONTHS = 12;
 
+function buildClosingDate(year, month, closingDay) {
+  if (!closingDay) return null;
+  const paddedYear = String(year).padStart(4, "0");
+  const paddedMonth = String(month).padStart(2, "0");
+  const lastDay = new Date(Number(paddedYear), Number(paddedMonth), 0).getDate();
+  const safeDay = Math.max(1, Math.min(Number(closingDay) || 1, lastDay));
+  return `${paddedYear}-${paddedMonth}-${String(safeDay).padStart(2, "0")}`;
+}
+
 function ensureMonthStructure(db, year, month) {
   if (!db.anos) db.anos = {};
   if (!db.anos[year]) db.anos[year] = { meses: {} };
+
+  const closingDate = buildClosingDate(
+    year,
+    month,
+    db.config?.fechamento_fatura_dia
+  );
 
   if (!db.anos[year].meses[month]) {
     db.anos[year].meses[month] = {
@@ -17,7 +32,7 @@ function ensureMonthStructure(db, year, month) {
       },
       calendario: {
         pagamentos: [],
-        fechamento_fatura: null,
+        fechamento_fatura: closingDate,
       },
       entradas_saidas: [],
       contas_recorrentes_pre_fatura: [],
@@ -32,7 +47,16 @@ function ensureMonthStructure(db, year, month) {
     };
   }
 
-  return db.anos[year].meses[month];
+  const monthRef = db.anos[year].meses[month];
+  if (
+    monthRef.calendario &&
+    monthRef.calendario.fechamento_fatura == null &&
+    closingDate
+  ) {
+    monthRef.calendario.fechamento_fatura = closingDate;
+  }
+
+  return monthRef;
 }
 
 function recalcMonthTotals(monthRef) {

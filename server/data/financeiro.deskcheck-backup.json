@@ -1,0 +1,450 @@
+{
+  "config": {
+    "fechamento_fatura_dia": 20,
+    "adiantamento_salario": {
+      "habilitado": true,
+      "dia": 10,
+      "percentual": 40
+    }
+  },
+  "anos": {
+    "2025": {
+      "meses": {
+        "11": {
+          "dados": {
+            "adiantamento": 3500,
+            "pagamento": 5500,
+            "total_liquido": 8610
+          },
+          "calendario": {
+            "pagamentos": [
+              "2025-11-10",
+              "2025-11-25"
+            ],
+            "fechamento_fatura": "2025-11-20"
+          },
+          "entradas_saidas": [
+            {
+              "id": "nov-e1",
+              "data": "2025-11-05",
+              "valor": -480,
+              "descricao": "Supermercado",
+              "parcela": null,
+              "categoria": "Mercado",
+              "tags": [
+                "casa"
+              ],
+              "recorrencia": null
+            },
+            {
+              "id": "nov-e2",
+              "data": "2025-11-12",
+              "valor": 1500,
+              "descricao": "Freelancer design",
+              "parcela": null,
+              "categoria": "Renda extra",
+              "tags": [
+                "freela"
+              ],
+              "recorrencia": null
+            },
+            {
+              "id": "nov-e3",
+              "data": "2025-11-18",
+              "valor": -900,
+              "descricao": "Conserto carro",
+              "parcela": null,
+              "categoria": "Transporte",
+              "tags": [
+                "carro"
+              ],
+              "recorrencia": null
+            }
+          ],
+          "contas_recorrentes_pre_fatura": [
+            {
+              "id": "nov-r1",
+              "data": "2025-11-08",
+              "valor": -140,
+              "descricao": "Internet",
+              "categoria": "Servicos",
+              "tags": [
+                "fixo"
+              ],
+              "recorrencia": {
+                "tipo": "mensal",
+                "termina_em": null
+              }
+            },
+            {
+              "id": "nov-r2",
+              "data": "2025-11-10",
+              "valor": -50,
+              "descricao": "Streaming",
+              "categoria": "Entretenimento",
+              "tags": [
+                "fixo"
+              ],
+              "recorrencia": {
+                "tipo": "mensal",
+                "termina_em": null
+              }
+            }
+          ],
+          "contas_recorrentes_pos_fatura": [
+            {
+              "id": "nov-r3",
+              "data": "2025-11-23",
+              "valor": -120,
+              "descricao": "Academia",
+              "categoria": "Saude",
+              "tags": [
+                "fitness"
+              ],
+              "recorrencia": {
+                "tipo": "mensal",
+                "termina_em": null
+              }
+            },
+            {
+              "id": "nov-r4",
+              "data": "2025-11-28",
+              "valor": -200,
+              "descricao": "Conta de luz",
+              "categoria": "Moradia",
+              "tags": [
+                "fixo"
+              ],
+              "recorrencia": {
+                "tipo": "mensal",
+                "termina_em": null
+              }
+            }
+          ],
+          "poupanca": {
+            "movimentos": [
+              {
+                "id": "nov-s1",
+                "data": "2025-11-07",
+                "valor": 400,
+                "descricao": "Aporte mensal",
+                "tipo": "aporte"
+              },
+              {
+                "id": "nov-s2",
+                "data": "2025-11-22",
+                "valor": 150,
+                "descricao": "Resgate emergencia",
+                "tipo": "resgate"
+              }
+            ]
+          },
+          "emprestimos": {
+            "feitos": [
+              {
+                "id": "nov-l1",
+                "data": "2025-11-15",
+                "valor": 300,
+                "descricao": "Emprestimo amigo"
+              }
+            ],
+            "recebidos": [
+              {
+                "id": "nov-l2",
+                "data": "2025-11-02",
+                "valor": 500,
+                "descricao": "Ajuda familia"
+              }
+            ]
+          }
+        },
+        "12": {
+          "dados": {
+            "adiantamento": 3600,
+            "pagamento": 5400,
+            "total_liquido": 7805
+          },
+          "calendario": {
+            "pagamentos": [
+              "2025-12-10",
+              "2025-12-23"
+            ],
+            "fechamento_fatura": "2025-12-20"
+          },
+          "entradas_saidas": [
+            {
+              "id": "dec-e1",
+              "data": "2025-12-01",
+              "valor": -1800,
+              "descricao": "Aluguel",
+              "parcela": null,
+              "categoria": "Moradia",
+              "tags": [
+                "fixo"
+              ],
+              "recorrencia": null
+            },
+            {
+              "id": "dec-e2",
+              "data": "2025-12-05",
+              "valor": -520,
+              "descricao": "Mercado de fim de ano",
+              "parcela": null,
+              "categoria": "Mercado",
+              "tags": [
+                "casa"
+              ],
+              "recorrencia": null
+            },
+            {
+              "id": "dec-e3",
+              "data": "2025-12-12",
+              "valor": 2000,
+              "descricao": "Freela de Natal",
+              "parcela": null,
+              "categoria": "Renda extra",
+              "tags": [
+                "freela"
+              ],
+              "recorrencia": null
+            },
+            {
+              "id": "dec-e4",
+              "data": "2025-12-16",
+              "valor": -300,
+              "descricao": "Transporte",
+              "parcela": null,
+              "categoria": "Transporte",
+              "tags": [
+                "dia a dia"
+              ],
+              "recorrencia": null
+            },
+            {
+              "data": "2025-12-19",
+              "valor": -320,
+              "descricao": "Compra parcelada ajustada",
+              "categoria": "Teste",
+              "tags": [
+                "cartao"
+              ],
+              "parcela": "1/3",
+              "id": "807ae902-cd41-4dc1-8932-5578dd0b538d",
+              "serie_id": "5578f970-064d-42d1-a0b3-a3927181a238",
+              "recorrencia": null
+            }
+          ],
+          "contas_recorrentes_pre_fatura": [
+            {
+              "id": "dec-r2",
+              "data": "2025-12-15",
+              "valor": -55,
+              "descricao": "Netflix",
+              "categoria": "Streaming",
+              "tags": [],
+              "recorrencia": {
+                "tipo": "mensal",
+                "termina_em": null
+              }
+            }
+          ],
+          "contas_recorrentes_pos_fatura": [
+            {
+              "id": "dec-r3",
+              "data": "2025-12-26",
+              "valor": -120,
+              "descricao": "Academia",
+              "categoria": "Saude",
+              "tags": [
+                "fitness"
+              ],
+              "recorrencia": {
+                "tipo": "mensal",
+                "termina_em": null
+              }
+            },
+            {
+              "id": "dec-r4",
+              "data": "2025-12-27",
+              "valor": -80,
+              "descricao": "Conta de agua",
+              "categoria": "Moradia",
+              "tags": [
+                "fixo"
+              ],
+              "recorrencia": {
+                "tipo": "mensal",
+                "termina_em": null
+              }
+            }
+          ],
+          "poupanca": {
+            "movimentos": [
+              {
+                "data": "2025-12-06",
+                "valor": 800,
+                "descricao": "Aporte extra",
+                "tipo": "aporte",
+                "id": "fbdd0323-3e9d-4934-bbd0-8e5167bf4093"
+              },
+              {
+                "data": "2025-12-18",
+                "valor": 300,
+                "descricao": "Resgate cartao",
+                "tipo": "resgate",
+                "id": "a9c7edea-88bd-4513-8e62-5307baee09cb"
+              },
+              {
+                "data": "2025-12-19",
+                "valor": 100,
+                "descricao": "Aporte teste",
+                "tipo": "aporte",
+                "id": "2c0616ba-bffe-4b21-8295-e4fb2efd7bef"
+              }
+            ]
+          },
+          "emprestimos": {
+            "feitos": [
+              {
+                "data": "2025-12-07",
+                "valor": 400,
+                "descricao": "Emprestimo tio",
+                "id": "d29425e2-aa25-426b-8e28-6266c21610bb"
+              },
+              {
+                "data": "2025-12-20",
+                "valor": 600,
+                "descricao": "Emprestimo teste",
+                "id": "0a9987ba-765e-4aa4-b88a-c81aa3fcf83c"
+              },
+              {
+                "data": "2025-12-22",
+                "valor": 150,
+                "descricao": "Emprestimo curto",
+                "id": "03e02e3d-4e0b-469a-9510-a278f70cb34b"
+              }
+            ],
+            "recebidos": [
+              {
+                "data": "2025-12-10",
+                "valor": 250,
+                "descricao": "Emprestimo recebido",
+                "id": "7644640a-6b69-4d6e-b242-e10b213fd4f0"
+              },
+              {
+                "data": "2025-12-25",
+                "valor": 180,
+                "descricao": "Recebido curto",
+                "id": "c6140aab-6a0f-41b1-8b69-10ae1355d11c"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "2026": {
+      "meses": {
+        "01": {
+          "dados": {
+            "adiantamento": 0,
+            "pagamento": 0,
+            "total_liquido": -320
+          },
+          "calendario": {
+            "pagamentos": [],
+            "fechamento_fatura": null
+          },
+          "entradas_saidas": [
+            {
+              "data": "2026-01-19",
+              "valor": -320,
+              "descricao": "Compra parcelada ajustada",
+              "categoria": "Teste",
+              "tags": [
+                "cartao"
+              ],
+              "parcela": "2/3",
+              "id": "c1078eeb-249d-4547-be07-3cfa414945e0",
+              "serie_id": "5578f970-064d-42d1-a0b3-a3927181a238",
+              "recorrencia": null
+            }
+          ],
+          "contas_recorrentes_pre_fatura": [],
+          "contas_recorrentes_pos_fatura": [],
+          "poupanca": {
+            "movimentos": []
+          },
+          "emprestimos": {
+            "feitos": [],
+            "recebidos": []
+          }
+        },
+        "02": {
+          "dados": {
+            "adiantamento": 0,
+            "pagamento": 0,
+            "total_liquido": -320
+          },
+          "calendario": {
+            "pagamentos": [],
+            "fechamento_fatura": null
+          },
+          "entradas_saidas": [
+            {
+              "data": "2026-02-19",
+              "valor": -320,
+              "descricao": "Compra parcelada ajustada",
+              "categoria": "Teste",
+              "tags": [
+                "cartao"
+              ],
+              "parcela": "3/3",
+              "id": "4b9a7c60-e763-4c79-969a-b7464dec9c40",
+              "serie_id": "5578f970-064d-42d1-a0b3-a3927181a238",
+              "recorrencia": null
+            }
+          ],
+          "contas_recorrentes_pre_fatura": [],
+          "contas_recorrentes_pos_fatura": [],
+          "poupanca": {
+            "movimentos": []
+          },
+          "emprestimos": {
+            "feitos": [],
+            "recebidos": []
+          }
+        }
+      }
+    }
+  },
+  "apartamento": {
+    "financiamento_caixa": [
+      {
+        "ano": "2025",
+        "mes": "11",
+        "valor_parcela": 1850,
+        "saldo_devedor": 191000
+      },
+      {
+        "ano": "2025",
+        "mes": "12",
+        "valor_parcela": 1850,
+        "saldo_devedor": 189500
+      }
+    ],
+    "entrada_construtora": [
+      {
+        "ano": "2025",
+        "mes": "11",
+        "valor_parcela": 650,
+        "saldo_devedor": 26000
+      },
+      {
+        "ano": "2025",
+        "mes": "12",
+        "valor_parcela": 650,
+        "saldo_devedor": 25350
+      }
+    ]
+  }
+}

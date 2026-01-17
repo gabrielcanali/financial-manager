@@ -41,7 +41,11 @@ function validateMonthBlock(year, month, rawMonth, accumulator) {
     pagamentos: rawMonth.calendario?.pagamentos ?? [],
     fechamento_fatura: rawMonth.calendario?.fechamento_fatura ?? null,
   };
-  const calendarValidation = validateCalendar(calendarInput, { partial: false });
+  const calendarValidation = validateCalendar(calendarInput, {
+    partial: false,
+    expectedYear: year,
+    expectedMonth: month,
+  });
   calendarValidation.errors.forEach((err) =>
     accumulator.errors.push(`${path}.calendario: ${err}`)
   );
@@ -247,4 +251,3 @@ function validateDbPayload(payload) {
 }
 
 export { validateDbPayload };
-
