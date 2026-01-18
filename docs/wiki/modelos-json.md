@@ -139,6 +139,22 @@
 - `installment.mode` pode ser `creditCard` ou `direct` (débito/PIX/dinheiro).
 - A regra "no dia do fechamento é após" é aplicada quando `mode=creditCard`.
 
+### 4.5 Transações de Salário
+
+- Transações originadas do salário devem possuir:
+  - `source.type = "salary"`
+  - `status` podendo ser `projected` ou `confirmed`
+- No início do mês, as transações de salário são criadas como `projected`.
+- Quando a data atual atingir a data de pagamento da transação, seu `status` deve ser alterado para `confirmed`.
+
+### 4.6 Parcelas com edição manual
+
+- Parcelas podem possuir um marcador indicando edição local.
+- Campo sugerido:
+  - `editedManually: true`
+- Parcelas com `editedManually = true` **não devem ser sobrescritas automaticamente** por edições da transação mãe.
+- A sobrescrita só pode ocorrer após confirmação explícita do usuário.
+
 ---
 
 ## 5. recurring.json
@@ -266,14 +282,7 @@
 
 ## 10. Pendências Registradas (conforme diretriz)
 
-1) **Salário: confirmação vs projeção**
-- O contrato define recorrências gerando transações confirmadas ao iniciar o mês.
-- Salário é entidade própria: falta definir se o sistema:
-  - (a) gera transações confirmadas do salário no início do mês, ou
-  - (b) gera projeções e o usuário confirma, ou
-  - (c) confirma automaticamente por data.
-
-> Enquanto não definido: **não implementar lógica automática de confirmação**; registrar e manter apenas projeções visíveis no dashboard.
+- Nenhuma
 
 ---
 

@@ -93,6 +93,21 @@ O sistema deve suportar ambos:
 
 > Detalhes de prioridade/conflito (ex.: "edição local sobrescreve mãe") devem ser tratados como pendência, caso não sejam especificados em documento próprio.
 
+### 4.4 Conflito entre edição da transação mãe e parcelas
+
+- Uma parcela pode ser editada individualmente após sua criação.
+- Quando uma parcela for editada manualmente, ela passa a ser considerada **edição local**.
+
+#### Regra de conflito
+- Se existir ao menos uma parcela com edição local e o usuário editar a transação mãe, o sistema **não deve sobrescrever automaticamente** essas parcelas.
+- O sistema deve exigir confirmação explícita do usuário, oferecendo as opções:
+  1. Aplicar as alterações da transação mãe **somente nas parcelas não editadas manualmente**
+  2. Aplicar as alterações da transação mãe **em todas as parcelas**, sobrescrevendo as edições locais
+  3. Cancelar a operação
+
+- O comportamento padrão (default) deve ser:
+  - **Aplicar apenas nas parcelas não editadas manualmente**
+
 ### 4.4 Exclusão
 Ao excluir a transação mãe, o sistema deve perguntar:
 - Excluir todas as parcelas (confirmada + projetadas)
@@ -157,6 +172,22 @@ O salário do mês pode ser composto por:
 
 ### 7.3 Regra mensal
 - Adiantamento e pagamento final pertencem ao **mesmo mês**.
+
+### 7.4 Confirmação das Transações de Salário
+
+- O salário é tratado como entidade própria e gera transações financeiras.
+- No **início de cada mês**, o sistema deve gerar **transações projetadas** para:
+  - adiantamento salarial (quando configurado)
+  - pagamento final (valor restante do salário)
+
+#### Confirmação automática por data
+- As transações de salário **não são confirmadas automaticamente no início do mês**.
+- Cada transação de salário deve ser **confirmada automaticamente quando a data atual for maior ou igual à sua data de pagamento**.
+- Caso o usuário abra o sistema **após** a data de pagamento, a confirmação deve ocorrer **no primeiro acesso**.
+- Não é exigido processo em background; a verificação pode ocorrer no carregamento da aplicação.
+
+#### Regra mensal
+- O adiantamento e o pagamento final **pertencem sempre ao mesmo mês**, independentemente das datas específicas.
 
 ---
 
