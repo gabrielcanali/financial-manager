@@ -70,7 +70,7 @@ O agente **não pode trocar o modelo por conta própria**.
 - Priorizar clareza sobre performance
 
 ### 6.2 Proibições
-- Criar lógica “inteligente” não solicitada
+- Criar lógica "inteligente" não solicitada
 - Criar sistemas genéricos demais
 - Criar infra complexa no MVP
 
