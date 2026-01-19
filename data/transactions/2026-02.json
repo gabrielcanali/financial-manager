@@ -1,0 +1,23 @@
+{
+  "month": "2026-02",
+  "items": [
+    {
+      "id": "tx_inst_01",
+      "date": "2026-01-20",
+      "amount": 100,
+      "direction": "expense",
+      "categoryId": "cat_food",
+      "description": "Compra teste",
+      "status": "confirmed",
+      "source": {
+        "type": "installment"
+      },
+      "installment": {
+        "groupId": "inst_test_001",
+        "mode": "creditCard",
+        "total": 3,
+        "index": 1
+      }
+    }
+  ]
+}

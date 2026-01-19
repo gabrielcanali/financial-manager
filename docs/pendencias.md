@@ -110,3 +110,28 @@ Opção C. Se houver parcela editada manualmente, edição da mãe não sobrescr
 - [x] Resolvida
 
 ---
+
+### [P-003] Exclusao da transacao mae mantendo parcelas
+
+**Contexto**
+Implementacao de exclusao de parcelamento na tarefa `API-006`, considerando o modelo atual em `docs/wiki/modelos-json.md` (mae armazenada como transacao no mes de criacao com `installment.index = 1`).
+
+**Problema / Duvida**
+Quando o usuario escolhe "manter parcelas", qual comportamento esperado se a mae tambem representa a 1a parcela confirmada?
+
+**Opcoes consideradas**
+- Opcao A: A mae deve ser uma entidade separada (metadados). Excluir a mae nao remove nenhuma parcela.
+- Opcao B: A mae e a parcela `index = 1`. "Manter parcelas" remove apenas a mae, deixando apenas as parcelas futuras.
+- Opcao C: "Manter parcelas" preserva todas as transacoes e remove o vinculo de parcelamento (ex.: remover `installment`), transformando-as em transacoes normais.
+
+**Recomendacao do agente (nao implementar)**
+Opcao A, com ajuste explicito do modelo JSON para separar a mae das parcelas. Isso preserva todas as parcelas e evita perda da parcela confirmada ao excluir apenas a mae.
+
+**Decisao final**
+Opcao A. A transacao mae passa a ser um metadado separado; excluir a mae nao remove nenhuma parcela.
+
+**Status**
+- [ ] Em aberto
+- [x] Resolvida
+
+---

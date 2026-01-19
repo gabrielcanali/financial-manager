@@ -98,6 +98,10 @@ O sistema deve suportar ambos:
 - Uma parcela pode ser editada individualmente após sua criação.
 - Quando uma parcela for editada manualmente, ela passa a ser considerada **edição local**.
 
+#### Regra de manter parcelas
+- A transação mãe é **metadado** e não representa nenhuma parcela.
+- Se o usuário escolher **manter parcelas**, apenas o registro da mãe é removido; **todas as parcelas permanecem**.
+
 #### Regra de conflito
 - Se existir ao menos uma parcela com edição local e o usuário editar a transação mãe, o sistema **não deve sobrescrever automaticamente** essas parcelas.
 - O sistema deve exigir confirmação explícita do usuário, oferecendo as opções:

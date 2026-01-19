@@ -16,13 +16,14 @@
   categories.json
   recurring.json
   creditCard.json
+  installments.json
   salary.json
   meta.json
 ```
 
 ### Regras
 - `transactions/YYYY-MM.json` só existe se houver movimentação naquele mês.
-- Arquivos "globais" (categories/recurring/creditCard/salary) existem sempre após o onboarding.
+- Arquivos "globais" (categories/recurring/creditCard/installments/salary) existem sempre após o onboarding.
 
 ---
 
@@ -92,10 +93,11 @@
 ## 4. Parcelamento (transação mãe + parcelas)
 
 ### 4.1 Como representar
-- A transação mãe pode existir em um arquivo separado de "metadados" ou dentro do próprio mês de criação.
-- Para simplificar o MVP: **guardar a mãe no mês onde foi criada**, e relacionar parcelas por `installment.groupId`.
+- A transação mãe é uma **entidade separada de metadados**, armazenada fora dos arquivos mensais de transações.
+- Para o MVP, a mãe fica em um arquivo próprio de metadados (ex.: `installments.json`) e **não é uma parcela**.
+- As parcelas continuam armazenadas em `transactions/YYYY-MM.json` e são relacionadas por `installment.groupId`.
 
-### 4.2 Exemplo (mãe)
+### 4.2 Exemplo (mãe em metadados)
 ```json
 {
   "id": "t_parent_01",
@@ -104,6 +106,25 @@
   "direction": "expense",
   "categoryId": "cat_electronics",
   "description": "Teclado (12x)",
+  "source": { "type": "installment" },
+  "installment": {
+    "groupId": "inst_abc",
+    "mode": "creditCard",
+    "total": 12,
+    "index": null
+  }
+}
+```
+
+### 4.3 Exemplo (parcela confirmada)
+```json
+{
+  "id": "t_inst_01",
+  "date": "2026-01-10",
+  "amount": 100,
+  "direction": "expense",
+  "categoryId": "cat_electronics",
+  "description": "Teclado (1/12)",
   "status": "confirmed",
   "source": { "type": "installment" },
   "installment": {
@@ -115,7 +136,7 @@
 }
 ```
 
-### 4.3 Exemplo (parcela projetada)
+### 4.4 Exemplo (parcela projetada)
 ```json
 {
   "id": "t_inst_02",
@@ -291,4 +312,4 @@ Se você quiser, eu adapto esse modelo para:
 - separar "projeções" em arquivo dedicado (ex.: `projections/YYYY-MM.json`)
 - ou manter tudo em um único arquivo mensal com `status`.
 
-Pelo seu contrato atual, **status no
+Pelo seu contrato atual, **status no mesmo arquivo** é o caminho mais simples e consistente.
