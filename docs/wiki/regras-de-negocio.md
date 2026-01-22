@@ -164,6 +164,8 @@ Dada uma transação no cartão em `date`:
 
 ### 7.1 Persistência
 - Salário é uma **entidade própria** (ex.: `salary.json`).
+  - Deve incluir `categoryId` e `description` para as transações geradas.
+  - As transações de salário usam `direction = income`.
 
 ### 7.2 Componentes
 O salário do mês pode ser composto por:

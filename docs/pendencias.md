@@ -54,7 +54,30 @@ _(preenchido pelo responsável)_
 
 ## Pendências Abertas
 
-- Nenhuma
+### [P-005] Estrutura e deduplicacao do resumo mensal/anual
+
+**Contexto**
+Tarefa API-010 (dashboard). Preciso definir o formato do resumo mensal/anual e como incluir recorrencias projetadas quando ja existem transacoes confirmadas geradas no mesmo mes.
+
+**Problema / Duvida**
+Nao esta definido:
+- quais campos o resumo deve retornar (totais, saldo, detalhamento por status/direction, lista de itens, etc.)
+- como evitar dupla contagem das recorrencias projetadas quando ja existe transacao confirmada da recorrencia no mes.
+
+**Opcoes consideradas**
+- Opcao A: Retornar apenas totais (confirmed/projected por income/expense) e calcular recorrencias projetadas apenas quando nao houver transacao confirmada equivalente no mes (com regra de correspondencia definida).
+- Opcao B: Retornar lista de itens (transacoes do mes + recorrencias projetadas) e deixar o consumidor somar; deduplicacao nao ocorre.
+- Opcao C: Considerar apenas o que existe nos arquivos `transactions/YYYY-MM.json` (sem projeção adicional de recorrencias).
+
+**Recomendacao do agente (nao implementar)**
+Opcao A, com regra explicita de correspondencia para deduplicar recorrencias (ex.: source.type=recurring + date + amount + categoryId + description).
+
+**Decisao final**
+_(preenchido pelo responsavel)_
+
+**Status**
+- [ ] Em aberto
+- [ ] Resolvida
 
 ## Histórico de Pendências Resolvidas
 
@@ -129,6 +152,31 @@ Opcao A, com ajuste explicito do modelo JSON para separar a mae das parcelas. Is
 
 **Decisao final**
 Opcao A. A transacao mae passa a ser um metadado separado; excluir a mae nao remove nenhuma parcela.
+
+**Status**
+- [ ] Em aberto
+- [x] Resolvida
+
+---
+
+### [P-004] Campos obrigatorios das transacoes de salario
+
+**Contexto**
+Tarefa API-008 (projecoes de salario). O modelo de transacoes exige `direction`, `categoryId` e `description`, mas `salary.json` nao define esses campos.
+
+**Problema / Duvida**
+Nao esta definido como preencher `direction`, `categoryId` e `description` nas transacoes geradas pelo salario.
+
+**Opcoes consideradas**
+- Opcao A: Estender `salary.json` com `categoryId` e `description`, e fixar `direction = income`.
+- Opcao B: Exigir `direction`, `categoryId` e `description` como parametros na geracao de projecoes.
+- Opcao C: Criar uma categoria fixa de salario e descricao padrao.
+
+**Recomendacao do agente (nao implementar)**
+Opcao A, para manter a configuracao centralizada no `salary.json` e evitar defaults implicitos.
+
+**Decisao final**
+Opcao A. O `salary.json` deve incluir `categoryId` e `description`, e as transacoes geradas usam `direction = income`.
 
 **Status**
 - [ ] Em aberto

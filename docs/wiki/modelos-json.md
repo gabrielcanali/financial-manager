@@ -156,11 +156,11 @@
 }
 ```
 
-### 4.4 Observações
+### 4.5 Observações
 - `installment.mode` pode ser `creditCard` ou `direct` (débito/PIX/dinheiro).
 - A regra "no dia do fechamento é após" é aplicada quando `mode=creditCard`.
 
-### 4.5 Transações de Salário
+### 4.6 Transações de Salário
 
 - Transações originadas do salário devem possuir:
   - `source.type = "salary"`
@@ -168,7 +168,7 @@
 - No início do mês, as transações de salário são criadas como `projected`.
 - Quando a data atual atingir a data de pagamento da transação, seu `status` deve ser alterado para `confirmed`.
 
-### 4.6 Parcelas com edição manual
+### 4.7 Parcelas com edição manual
 
 - Parcelas podem possuir um marcador indicando edição local.
 - Campo sugerido:
@@ -239,6 +239,9 @@
 ```json
 {
   "baseSalary": 3000,
+  "direction": "income",
+  "categoryId": "cat_salary",
+  "description": "Salário",
   "paymentDay": 30,
   "advance": {
     "enabled": true,
@@ -251,6 +254,9 @@
 
 ### 7.2 Interpretação
 - `baseSalary`: salário total do mês.
+- `direction`: deve ser sempre `income` nas transações geradas.
+- `categoryId`: categoria usada nas transações de salário.
+- `description`: descrição aplicada às transações de salário.
 - `paymentDay`: dia do pagamento final.
 - `advance`:
   - se `enabled=true`, existe adiantamento
