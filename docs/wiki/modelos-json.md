@@ -319,3 +319,63 @@ Se você quiser, eu adapto esse modelo para:
 - ou manter tudo em um único arquivo mensal com `status`.
 
 Pelo seu contrato atual, **status no mesmo arquivo** é o caminho mais simples e consistente.
+
+## 12. Resumo mensal/anual (dashboard)
+
+### 12.1 Resumo mensal (totais consolidados)
+```json
+{
+  "month": "2026-01",
+  "totals": {
+    "confirmed": {
+      "income": 0,
+      "expense": 0
+    },
+    "projected": {
+      "income": 0,
+      "expense": 0
+    }
+  },
+  "balances": {
+    "confirmed": 0,
+    "projected": 0
+  }
+}
+```
+
+### 12.2 Regra de deduplicacao
+Recorrencias projetadas nao devem ser somadas quando existir transacao confirmada equivalente no mesmo mes.
+A equivalencia segue a regra definida em docs/wiki/regras-de-negocio.md:
+
+- source.type = "recurring"
+- date
+- amount
+- categoryId
+- description
+
+### 12.3 Resumo anual
+```json
+{
+  "year": "2026",
+  "totals": {
+    "confirmed": {
+      "income": 0,
+      "expense": 0
+    },
+    "projected": {
+      "income": 0,
+      "expense": 0
+    }
+  },
+  "balances": {
+    "confirmed": 0,
+    "projected": 0
+  }
+}
+```
+
+---
+
+## Observação (opcional, mas recomendada)
+
+O bloco "Pendências Registradas (conforme diretriz)" em `docs/wiki/modelos-json.md` diz "Nenhuma", mas havia pendência aberta e havia nota interna de pendência sobre salário. Considere alinhar esse bloco quando atualizar o arquivo, para manter consistência documental.​

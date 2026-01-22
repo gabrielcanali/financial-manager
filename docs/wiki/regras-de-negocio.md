@@ -218,8 +218,26 @@ O resumo mensal deve considerar:
 - recorrências projetadas do mês
 - parcelas projetadas do mês
 
+#### Formato do resumo mensal
+O resumo mensal deve retornar **totais consolidados** (não lista de itens), incluindo no mínimo:
+- total de entradas confirmadas
+- total de saídas confirmadas
+- total de entradas projetadas
+- total de saídas projetadas
+- saldo do mês considerando apenas confirmadas
+- saldo projetado (confirmadas + projetadas)
+
+#### Deduplicacao entre recorrencias projetadas e confirmadas
+Quando houver uma transacao confirmada que corresponda a uma recorrencia projetada no mesmo mes, a recorrencia projetada **nao deve ser somada** aos totais.
+A correspondencia deve usar simultaneamente:
+- source.type = "recurring"
+- date
+- amount
+- categoryId
+- description
+
 ### 9.2 Resumo anual
-- O resumo anual é a **soma dos meses**.
+- O resumo anual e a **soma dos resumos mensais ja deduplicados**.
 
 ---
 

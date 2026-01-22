@@ -54,30 +54,7 @@ _(preenchido pelo responsável)_
 
 ## Pendências Abertas
 
-### [P-005] Estrutura e deduplicacao do resumo mensal/anual
-
-**Contexto**
-Tarefa API-010 (dashboard). Preciso definir o formato do resumo mensal/anual e como incluir recorrencias projetadas quando ja existem transacoes confirmadas geradas no mesmo mes.
-
-**Problema / Duvida**
-Nao esta definido:
-- quais campos o resumo deve retornar (totais, saldo, detalhamento por status/direction, lista de itens, etc.)
-- como evitar dupla contagem das recorrencias projetadas quando ja existe transacao confirmada da recorrencia no mes.
-
-**Opcoes consideradas**
-- Opcao A: Retornar apenas totais (confirmed/projected por income/expense) e calcular recorrencias projetadas apenas quando nao houver transacao confirmada equivalente no mes (com regra de correspondencia definida).
-- Opcao B: Retornar lista de itens (transacoes do mes + recorrencias projetadas) e deixar o consumidor somar; deduplicacao nao ocorre.
-- Opcao C: Considerar apenas o que existe nos arquivos `transactions/YYYY-MM.json` (sem projeção adicional de recorrencias).
-
-**Recomendacao do agente (nao implementar)**
-Opcao A, com regra explicita de correspondencia para deduplicar recorrencias (ex.: source.type=recurring + date + amount + categoryId + description).
-
-**Decisao final**
-_(preenchido pelo responsavel)_
-
-**Status**
-- [ ] Em aberto
-- [ ] Resolvida
+- Nenhuma
 
 ## Histórico de Pendências Resolvidas
 
@@ -177,6 +154,33 @@ Opcao A, para manter a configuracao centralizada no `salary.json` e evitar defau
 
 **Decisao final**
 Opcao A. O `salary.json` deve incluir `categoryId` e `description`, e as transacoes geradas usam `direction = income`.
+
+**Status**
+- [ ] Em aberto
+- [x] Resolvida
+
+---
+
+### [P-005] Estrutura e deduplicacao do resumo mensal/anual
+
+**Contexto**
+Tarefa API-010 (dashboard). Preciso definir o formato do resumo mensal/anual e como incluir recorrencias projetadas quando ja existem transacoes confirmadas geradas no mesmo mes.
+
+**Problema / Duvida**
+Nao esta definido:
+- quais campos o resumo deve retornar (totais, saldo, detalhamento por status/direction, lista de itens, etc.)
+- como evitar dupla contagem das recorrencias projetadas quando ja existe transacao confirmada da recorrencia no mes.
+
+**Opcoes consideradas**
+- Opcao A: Retornar apenas totais (confirmed/projected por income/expense) e calcular recorrencias projetadas apenas quando nao houver transacao confirmada equivalente no mes (com regra de correspondencia definida).
+- Opcao B: Retornar lista de itens (transacoes do mes + recorrencias projetadas) e deixar o consumidor somar; deduplicacao nao ocorre.
+- Opcao C: Considerar apenas o que existe nos arquivos `transactions/YYYY-MM.json` (sem projeção adicional de recorrencias).
+
+**Recomendacao do agente (nao implementar)**
+Opcao A, com regra explicita de correspondencia para deduplicar recorrencias (ex.: source.type=recurring + date + amount + categoryId + description).
+
+**Decisao final**
+Opcao A. O resumo mensal/anual retorna apenas totais consolidados (por status e direction), com deduplicacao explicita entre recorrencias projetadas e transacoes confirmadas equivalentes no mesmo mes. A regra de correspondencia fica definida nas regras de negocio.
 
 **Status**
 - [ ] Em aberto
