@@ -1,6 +1,7 @@
 const fs = require("fs/promises");
 const { readJsonFile, writeJsonFile } = require("./json-store");
 const { resolveTransactionsMonthPath } = require("./paths");
+const { confirmSalaryTransactionsForMonth } = require("./salary-repository");
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MONTH_PATTERN = /^(\d{4})-(\d{2})$/;
@@ -28,6 +29,14 @@ function parseIsoDate(dateString) {
   }
 
   return { year, month, day };
+}
+
+function getCurrentDateString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function assertMonthString(month) {
@@ -114,6 +123,11 @@ function assertTransactionMatchesMonth(transaction, month) {
 
 async function listTransactions(month, baseDir = process.cwd()) {
   assertMonthString(month);
+  await confirmSalaryTransactionsForMonth(
+    month,
+    getCurrentDateString(),
+    baseDir
+  );
   const filePath = resolveTransactionsMonthPath(month, baseDir);
 
   try {

@@ -187,3 +187,53 @@ Opcao A. O resumo mensal/anual retorna apenas totais consolidados (por status e 
 - [x] Resolvida
 
 ---
+
+### [P-006] Confirmação do stack oficial (API e front-end)
+
+**Contexto**
+Tarefa API-013 solicita registrar o stack (API Express; SPA Vite + Vue 3 + Tailwind + Pinia) em `docs/wiki/ideias.md`, mas exige confirmação explícita do responsável antes de documentar.
+
+**Problema / Dúvida**
+Não há confirmação explícita do responsável sobre o stack a ser registrado como fonte de verdade.
+
+**Opções consideradas**
+- Opção A: Confirmar Express + Vite/Vue/Tailwind/Pinia e registrar.
+- Opção B: Definir stack diferente e registrar.
+- Opção C: Manter indefinido até confirmação.
+
+**Recomendação do agente (não implementar)**
+Opção C, para evitar documentar stack sem validação explícita.
+
+**Decisão final**
+Opção A. Confirmado: server em Express (Framework Node.JS) e client em Vue 3 + Vite + Tailwind + Pinia.
+
+**Status**
+- [ ] Em aberto
+- [x] Resolvida
+
+---
+
+### [P-007] Padroes minimos de projeto (API e front-end)
+
+**Contexto**
+Tarefa API-014 solicita definir padroes minimos de organizacao para API e front-end e registrar em `docs/wiki/ideias.md`, mas exige lista aprovada pelo responsavel.
+
+**Problema / Duvida**
+Os padroes minimos (camadas, responsabilidades, naming, composicao, estado global, etc.) nao foram definidos pelo responsavel.
+
+**Opcoes consideradas**
+- Opcao A: Definir padroes agora e registrar sem validacao.
+- Opcao B: Solicitar ao responsavel a lista de padroes minimos e registrar apos confirmacao.
+- Opcao C: Manter indefinido ate confirmacao.
+
+**Recomendacao do agente (nao implementar)**
+Opcao B, para evitar decisoes implicitas fora da fonte de verdade.
+
+**Decisao final**
+Opção B. Definir apenas o mínimo indispensável.
+
+**Status**
+- [ ] Em aberto
+- [x] Resolvida
+
+---

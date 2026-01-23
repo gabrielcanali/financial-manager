@@ -33,6 +33,11 @@ function parseIsoDate(dateString) {
   return { year, month, day };
 }
 
+function toUtcTimestamp(dateString) {
+  const { year, month, day } = parseIsoDate(dateString);
+  return Date.UTC(year, month - 1, day);
+}
+
 function parseMonthString(month) {
   const match = MONTH_PATTERN.exec(month);
   if (!match) {
@@ -257,8 +262,51 @@ async function generateSalaryProjectionsForMonth(
   return projections;
 }
 
+async function confirmSalaryTransactionsForMonth(
+  month,
+  currentDate,
+  baseDir = process.cwd()
+) {
+  parseMonthString(month);
+  if (typeof currentDate !== "string" || currentDate.length === 0) {
+    throw new Error("currentDate must be in YYYY-MM-DD format");
+  }
+
+  const currentTimestamp = toUtcTimestamp(currentDate);
+  const { filePath, data } = await loadTransactionsMonth(month, baseDir);
+
+  let updated = 0;
+  let changed = false;
+
+  const nextItems = data.items.map((item) => {
+    if (
+      !item ||
+      item.status !== "projected" ||
+      item.source?.type !== "salary"
+    ) {
+      return item;
+    }
+
+    const transactionTimestamp = toUtcTimestamp(item.date);
+    if (transactionTimestamp > currentTimestamp) {
+      return item;
+    }
+
+    updated += 1;
+    changed = true;
+    return { ...item, status: "confirmed" };
+  });
+
+  if (changed) {
+    await writeJsonFile(filePath, { month, items: nextItems });
+  }
+
+  return { month, updated };
+}
+
 module.exports = {
   getSalaryConfig,
   setSalaryConfig,
   generateSalaryProjectionsForMonth,
+  confirmSalaryTransactionsForMonth,
 };

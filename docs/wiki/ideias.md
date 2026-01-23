@@ -14,6 +14,45 @@ Este documento define **o que o sistema é**, **como ele se comporta** e **o que
 - Sem automações inteligentes no MVP
 - Qualquer dúvida não especificada **não deve ser implementada** e deve ser registrada como pendência
 
+### 2.1 Stack oficial (MVP)
+- Server: Express (Framework Node.JS)
+- Client: Vue 3 + Vite + Tailwind + Pinia
+- O front-end permanece fora do MVP, salvo decisao explicita.
+
+### 2.2 Padrões mínimos de projeto (MVP)
+- API:
+  - Estrutura mínima: routes/, controllers/, services/, repositories/
+  - Responsabilidades:
+    - routes: mapeia endpoints/middlewares e valida entrada antes do controller
+    - controllers: adapta HTTP (req/res), chama services, retorna resposta padronizada
+    - services: regras de negócio e orquestração; não acessa req/res
+    - repositories: leitura/escrita de JSON; sem acoplamento HTTP
+  - Validação: toda entrada validada antes do controller; preferência por middleware
+  - Resposta:
+    - Sucesso (2xx): `{ success: true, data: {}, meta: {} }`
+    - Erro (4xx/5xx): `{ success: false, error: { code, message, details } }`
+  - Naming:
+    - pastas/arquivos: kebab-case
+    - funções/variáveis: camelCase
+    - classes/tipos: PascalCase
+    - endpoints: substantivos no plural (ex.: /transactions)
+- Front-end:
+  - Estrutura mínima: components/, pages/, stores/, services/
+  - Responsabilidades:
+    - pages: orquestram a tela e conectam stores/componentes
+    - components: UI/interação local; sem chamadas HTTP diretas
+    - stores (Pinia): estado global, cache/sincronização; chamam services
+    - services: camada única de consumo da API; sem estado de UI
+  - Estado:
+    - global apenas em stores (Pinia)
+    - local no componente quando não for compartilhado
+  - Naming:
+    - components: PascalCase.vue
+    - pages: PascalCasePage.vue
+    - stores: useXStore.(js|ts) com defineStore('x', ...)
+    - services: x.service.(js|ts) por domínio
+- Lista aprovada (documento auxiliar): `docs/wiki/padroes-minimos.md`
+
 ---
 
 ## 3. Armazenamento e Estrutura de Dados

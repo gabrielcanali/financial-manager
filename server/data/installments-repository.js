@@ -575,7 +575,17 @@ async function updateInstallmentParcel(month, parcel, baseDir = process.cwd()) {
     throw new Error("Installment parcel total cannot be changed");
   }
 
-  const parcelMonth = parcel.date.slice(0, 7);
+  let closingDay = null;
+  if (parcel.installment.mode === "creditCard") {
+    const config = await getCreditCardConfig(baseDir);
+    closingDay = config.closingDay;
+  }
+
+  const parcelMonth = await getTargetMonth(
+    parcel.date,
+    parcel.installment.mode,
+    closingDay
+  );
   if (parcelMonth !== month) {
     throw new Error("Installment parcel date must match target month");
   }
