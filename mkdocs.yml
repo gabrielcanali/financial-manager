@@ -1,0 +1,48 @@
+﻿site_name: Financial Manager
+
+theme:
+  name: material
+
+nav:
+  - Início: index.md
+  - Guia de leitura: guia-de-leitura.md
+  - Pendências: pendencias.md
+  - Wiki:
+      - Ideias: wiki/ideias.md
+      - Regras de negócio: wiki/regras-de-negocio.md
+      - Modelos JSON: wiki/modelos-json.md
+      - Padrões mínimos: wiki/padroes-minimos.md
+  - Regras do agente: rules/regras-de-atuacao.md
+  - Board:
+      - Template de tarefa: board/template-tarefa.md
+      - Concluídas:
+          - DOC-001: "board/[2] DONE/DOC-001.md"
+          - API-001: "board/[2] DONE/API-001.md"
+          - API-002: "board/[2] DONE/API-002.md"
+          - API-003: "board/[2] DONE/API-003.md"
+          - API-004: "board/[2] DONE/API-004.md"
+          - API-005: "board/[2] DONE/API-005.md"
+          - API-006: "board/[2] DONE/API-006.md"
+          - API-007: "board/[2] DONE/API-007.md"
+          - API-008: "board/[2] DONE/API-008.md"
+          - API-009: "board/[2] DONE/API-009.md"
+          - API-010: "board/[2] DONE/API-010.md"
+          - API-011: "board/[2] DONE/API-011.md"
+          - API-012: "board/[2] DONE/API-012.md"
+          - API-013: "board/[2] DONE/API-013.md"
+          - API-014: "board/[2] DONE/API-014.md"
+
+plugins:
+  - search
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - tables
+  - def_list
+  - admonition
+  - attr_list
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences

@@ -21,36 +21,36 @@ Este documento define **o que o sistema é**, **como ele se comporta** e **o que
 
 ### 2.2 Padrões mínimos de projeto (MVP)
 - API:
-  - Estrutura mínima: routes/, controllers/, services/, repositories/
-  - Responsabilidades:
-    - routes: mapeia endpoints/middlewares e valida entrada antes do controller
-    - controllers: adapta HTTP (req/res), chama services, retorna resposta padronizada
-    - services: regras de negócio e orquestração; não acessa req/res
-    - repositories: leitura/escrita de JSON; sem acoplamento HTTP
-  - Validação: toda entrada validada antes do controller; preferência por middleware
-  - Resposta:
-    - Sucesso (2xx): `{ success: true, data: {}, meta: {} }`
-    - Erro (4xx/5xx): `{ success: false, error: { code, message, details } }`
-  - Naming:
-    - pastas/arquivos: kebab-case
-    - funções/variáveis: camelCase
-    - classes/tipos: PascalCase
-    - endpoints: substantivos no plural (ex.: /transactions)
+    - Estrutura mínima: routes/, controllers/, services/, repositories/
+    - Responsabilidades:
+        - routes: mapeia endpoints/middlewares e valida entrada antes do controller
+        - controllers: adapta HTTP (req/res), chama services, retorna resposta padronizada
+        - services: regras de negócio e orquestração; não acessa req/res
+        - repositories: leitura/escrita de JSON; sem acoplamento HTTP
+    - Validação: toda entrada validada antes do controller; preferência por middleware
+    - Resposta:
+        - Sucesso (2xx): `{ success: true, data: {}, meta: {} }`
+        - Erro (4xx/5xx): `{ success: false, error: { code, message, details } }`
+    - Naming:
+        - pastas/arquivos: kebab-case
+        - funções/variáveis: camelCase
+        - classes/tipos: PascalCase
+        - endpoints: substantivos no plural (ex.: /transactions)
 - Front-end:
-  - Estrutura mínima: components/, pages/, stores/, services/
-  - Responsabilidades:
-    - pages: orquestram a tela e conectam stores/componentes
-    - components: UI/interação local; sem chamadas HTTP diretas
-    - stores (Pinia): estado global, cache/sincronização; chamam services
-    - services: camada única de consumo da API; sem estado de UI
-  - Estado:
-    - global apenas em stores (Pinia)
-    - local no componente quando não for compartilhado
-  - Naming:
-    - components: PascalCase.vue
-    - pages: PascalCasePage.vue
-    - stores: useXStore.(js|ts) com defineStore('x', ...)
-    - services: x.service.(js|ts) por domínio
+    - Estrutura mínima: components/, pages/, stores/, services/
+    - Responsabilidades:
+        - pages: orquestram a tela e conectam stores/componentes
+        - components: UI/interação local; sem chamadas HTTP diretas
+        - stores (Pinia): estado global, cache/sincronização; chamam services
+        - services: camada única de consumo da API; sem estado de UI
+    - Estado:
+        - global apenas em stores (Pinia)
+        - local no componente quando não for compartilhado
+    - Naming:
+        - components: PascalCase.vue
+        - pages: PascalCasePage.vue
+        - stores: useXStore.(js|ts) com defineStore('x', ...)
+        - services: x.service.(js|ts) por domínio
 - Lista aprovada (documento auxiliar): `docs/wiki/padroes-minimos.md`
 
 ---
@@ -60,7 +60,7 @@ Este documento define **o que o sistema é**, **como ele se comporta** e **o que
 ### 3.1 Organização dos arquivos
 - Os dados são armazenados em **arquivos JSON locais**
 - Organização por **domínio e mês**
-  - Exemplo: `transactions/2026-01.json`
+    - Exemplo: `transactions/2026-01.json`
 - Um arquivo mensal **só é criado quando houver movimentação** naquele mês
 
 ### 3.2 Identificação
@@ -84,13 +84,13 @@ Cada transação possui, no mínimo:
 - Apenas a **primeira parcela é criada como transação confirmada**
 - As demais parcelas são **projetadas**
 - Parcelas futuras:
-  - aparecem nos resumos dos meses futuros
+    - aparecem nos resumos dos meses futuros
 
 ### 4.3 Edição e exclusão
 - Editar uma transação passada:
-  - recalcula imediatamente o saldo do mês
+    - recalcula imediatamente o saldo do mês
 - Excluir transação mãe:
-  - o sistema **pergunta o que fazer com as parcelas** (excluir todas ou manter)
+    - o sistema **pergunta o que fazer com as parcelas** (excluir todas ou manter)
 - Exclusões impactam imediatamente os totais
 
 ---
@@ -117,8 +117,8 @@ Cada transação possui, no mínimo:
 ### 6.2 Comportamento
 - Recorrências são **projeções**, não transações imediatas
 - Quando o mês inicia:
-  - a recorrência gera uma transação
-  - segue automaticamente para o próximo ciclo
+    - a recorrência gera uma transação
+    - segue automaticamente para o próximo ciclo
 
 ### 6.3 Edição
 - Alterações em uma recorrência afetam **apenas projeções futuras**
@@ -130,20 +130,20 @@ Cada transação possui, no mínimo:
 ### 7.1 Estrutura
 - O salário é tratado como uma **entidade própria** (ex: `salary.json`)
 - Possui:
-  - valor total do salário
-  - data de pagamento final
+    - valor total do salário
+    - data de pagamento final
 
 ### 7.2 Adiantamento
 - O salário pode possuir **adiantamento**
 - O adiantamento:
-  - pode ser **percentual do salário**
-  - possui data própria
+    - pode ser **percentual do salário**
+    - possui data própria
 
 ### 7.3 Regra mensal
 - O adiantamento e o pagamento final **sempre pertencem ao mesmo mês**
-  - Exemplo:
-    - Adiantamento: 40% no dia 15
-    - Pagamento final: 60% no dia 30
+    - Exemplo:
+        - Adiantamento: 40% no dia 15
+        - Pagamento final: 60% no dia 30
 
 ---
 
@@ -169,8 +169,8 @@ Cada transação possui, no mínimo:
 
 #### Resumo mensal
 - Exibe:
-  - transações confirmadas
-  - recorrências projetadas
+    - transações confirmadas
+    - recorrências projetadas
 
 #### Resumo anual
 - Calculado como **soma dos meses**
@@ -185,9 +185,9 @@ Cada transação possui, no mínimo:
 
 ### 10.2 Navegação
 - Ao trocar de mês/ano:
-  - o sistema alerta se houver dados não salvos
+    - o sistema alerta se houver dados não salvos
 - O sistema lembra:
-  - o último mês acessado
+    - o último mês acessado
 
 ---
 
@@ -195,8 +195,8 @@ Cada transação possui, no mínimo:
 
 ### 11.1 Validações mínimas
 - Impedir:
-  - valores negativos onde não fazem sentido
-  - datas inválidas
+    - valores negativos onde não fazem sentido
+    - datas inválidas
 
 ### 11.2 Erros
 - Apenas feedback visual

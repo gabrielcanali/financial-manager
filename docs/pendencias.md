@@ -9,15 +9,15 @@
 ## Como usar este documento
 
 - Sempre que surgir uma dúvida não coberta por:
-  - `docs/wiki/ideias.md`
-  - `docs/wiki/regras-de-negocio.md`
-  - `docs/wiki/modelos-json.md`
+    - `docs/wiki/ideias.md`
+    - `docs/wiki/regras-de-negocio.md`
+    - `docs/wiki/modelos-json.md`
 
   ela **deve ser registrada aqui**.
 
 - Uma pendência só pode ser removida quando:
-  - houver decisão explícita do responsável (você)
-  - a decisão for refletida na documentação oficial
+    - houver decisão explícita do responsável (você)
+    - a decisão for refletida na documentação oficial
 
 ---
 

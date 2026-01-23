@@ -163,8 +163,8 @@
 ### 4.6 Transações de Salário
 
 - Transações originadas do salário devem possuir:
-  - `source.type = "salary"`
-  - `status` podendo ser `projected` ou `confirmed`
+    - `source.type = "salary"`
+    - `status` podendo ser `projected` ou `confirmed`
 - No início do mês, as transações de salário são criadas como `projected`.
 - Quando a data atual atingir a data de pagamento da transação, seu `status` deve ser alterado para `confirmed`.
 
@@ -172,7 +172,7 @@
 
 - Parcelas podem possuir um marcador indicando edição local.
 - Campo sugerido:
-  - `editedManually: true`
+    - `editedManually: true`
 - Parcelas com `editedManually = true` **não devem ser sobrescritas automaticamente** por edições da transação mãe.
 - A sobrescrita só pode ocorrer após confirmação explícita do usuário.
 
@@ -214,7 +214,7 @@
 
 ### 5.3 Regra de geração
 - No início de cada mês:
-  - para cada recorrência aplicável, criar transação `confirmed` em `transactions/YYYY-MM.json` com `source.type=recurring`.
+    - para cada recorrência aplicável, criar transação `confirmed` em `transactions/YYYY-MM.json` com `source.type=recurring`.
 
 ---
 
@@ -259,15 +259,15 @@
 - `description`: descrição aplicada às transações de salário.
 - `paymentDay`: dia do pagamento final.
 - `advance`:
-  - se `enabled=true`, existe adiantamento
-  - `type=percent` e `value=40` → adiantamento = 40% do salário
-  - valor final = salário − adiantamento
+    - se `enabled=true`, existe adiantamento
+    - `type=percent` e `value=40` → adiantamento = 40% do salário
+    - valor final = salário − adiantamento
 
 ### 7.3 Geração de transações
 - No início do mês, o sistema deve projetar (ou gerar conforme estratégia do MVP) as transações de salário.
 - Sugestão alinhada ao dashboard (confirmadas + projetadas):
-  - gerar **projeções** para adiantamento e pagamento final
-  - confirmar automaticamente quando o mês inicia? **Não** (pendência)
+    - gerar **projeções** para adiantamento e pagamento final
+    - confirmar automaticamente quando o mês inicia? **Não** (pendência)
 
 > **Pendência sugerida:** decidir se salário entra como recorrência projetada ou como transações confirmadas na virada do mês. O contrato atual define geração ao iniciar o mês para recorrências, mas salário foi definido como entidade própria.
 

@@ -15,19 +15,19 @@ Ele complementa `docs/wiki/ideias.md` e serve como referencia obrigatoria para q
 
 ### 1.2 Responsabilidades por camada
 - **Routes**
-  - mapeia endpoints e middlewares
-  - executa validacao de entrada antes do controller
+    - mapeia endpoints e middlewares
+    - executa validacao de entrada antes do controller
 - **Controllers**
-  - extrai dados do request
-  - chama services
-  - retorna resposta padronizada
+    - extrai dados do request
+    - chama services
+    - retorna resposta padronizada
 - **Services**
-  - implementa regras de negocio
-  - coordena chamadas a repositories
-  - nao acessa diretamente `req`/`res`
+    - implementa regras de negocio
+    - coordena chamadas a repositories
+    - nao acessa diretamente `req`/`res`
 - **Repositories**
-  - leitura/escrita de arquivos JSON
-  - nenhum acoplamento com HTTP
+    - leitura/escrita de arquivos JSON
+    - nenhum acoplamento com HTTP
 
 ### 1.3 Validacao
 - toda entrada deve ser validada **antes** de chegar ao controller
@@ -78,18 +78,18 @@ Ele complementa `docs/wiki/ideias.md` e serve como referencia obrigatoria para q
 
 ### 2.2 Composicao e separacao de responsabilidades
 - **Pages**
-  - orquestram a tela
-  - conectam stores e componentes
+    - orquestram a tela
+    - conectam stores e componentes
 - **Components**
-  - focados em UI e interacao local
-  - nao fazem chamadas HTTP diretas
+    - focados em UI e interacao local
+    - nao fazem chamadas HTTP diretas
 - **Stores (Pinia)**
-  - estado global centralizado
-  - regras de cache e sincronizacao
-  - chamam `services/` quando necessario
+    - estado global centralizado
+    - regras de cache e sincronizacao
+    - chamam `services/` quando necessario
 - **Services**
-  - camada unica para consumo da API
-  - sem estado de UI
+    - camada unica para consumo da API
+    - sem estado de UI
 
 ### 2.3 Estado
 - estado global deve residir apenas nas stores do Pinia

@@ -40,7 +40,7 @@ Fora do escopo do MVP (não implementar):
 ### 2.1 Organização
 - Os dados são persistidos localmente em **JSON**.
 - Arquivos por **domínio e mês** (quando aplicável).
-  - Exemplo: `transactions/2026-01.json`
+    - Exemplo: `transactions/2026-01.json`
 - Um arquivo mensal **só é criado se houver movimentação** naquele mês.
 
 ### 2.2 Identidade
@@ -78,13 +78,13 @@ Uma transação deve conter, no mínimo:
 ### 4.1 Modelo conceitual
 - Um parcelamento nasce de uma **transação mãe**.
 - Ao criar um parcelamento:
-  - **somente a 1ª parcela** é criada como **transação confirmada** no mês correspondente.
-  - as demais parcelas são criadas como **transações projetadas**.
+    - **somente a 1ª parcela** é criada como **transação confirmada** no mês correspondente.
+    - as demais parcelas são criadas como **transações projetadas**.
 
 ### 4.2 Projeções
 - Parcelas projetadas devem:
-  - aparecer nos resumos mensais dos meses futuros
-  - ser distinguíveis de confirmadas na UI
+    - aparecer nos resumos mensais dos meses futuros
+    - ser distinguíveis de confirmadas na UI
 
 ### 4.3 Edição
 O sistema deve suportar ambos:
@@ -105,12 +105,12 @@ O sistema deve suportar ambos:
 #### Regra de conflito
 - Se existir ao menos uma parcela com edição local e o usuário editar a transação mãe, o sistema **não deve sobrescrever automaticamente** essas parcelas.
 - O sistema deve exigir confirmação explícita do usuário, oferecendo as opções:
-  1. Aplicar as alterações da transação mãe **somente nas parcelas não editadas manualmente**
-  2. Aplicar as alterações da transação mãe **em todas as parcelas**, sobrescrevendo as edições locais
-  3. Cancelar a operação
+    1. Aplicar as alterações da transação mãe **somente nas parcelas não editadas manualmente**
+    2. Aplicar as alterações da transação mãe **em todas as parcelas**, sobrescrevendo as edições locais
+    3. Cancelar a operação
 
 - O comportamento padrão (default) deve ser:
-  - **Aplicar apenas nas parcelas não editadas manualmente**
+    - **Aplicar apenas nas parcelas não editadas manualmente**
 
 ### 4.4 Exclusão
 Ao excluir a transação mãe, o sistema deve perguntar:
@@ -131,8 +131,8 @@ Ao excluir a transação mãe, o sistema deve perguntar:
 ### 5.3 Geração ao iniciar o mês
 Quando um novo mês inicia:
 - para cada recorrência aplicável ao mês:
-  - gerar uma **transação confirmada**
-  - manter a recorrência ativa para o próximo ciclo
+    - gerar uma **transação confirmada**
+    - manter a recorrência ativa para o próximo ciclo
 
 ### 5.4 Edição
 - Alterar uma recorrência afeta **apenas projeções futuras**.
@@ -164,17 +164,17 @@ Dada uma transação no cartão em `date`:
 
 ### 7.1 Persistência
 - Salário é uma **entidade própria** (ex.: `salary.json`).
-  - Deve incluir `categoryId` e `description` para as transações geradas.
-  - As transações de salário usam `direction = income`.
+    - Deve incluir `categoryId` e `description` para as transações geradas.
+    - As transações de salário usam `direction = income`.
 
 ### 7.2 Componentes
 O salário do mês pode ser composto por:
 - **adiantamento** (opcional)
-  - percentual do salário
-  - data de pagamento do adiantamento
+    - percentual do salário
+    - data de pagamento do adiantamento
 - **pagamento final** (obrigatório)
-  - data de pagamento final
-  - valor restante (salário − adiantamento)
+    - data de pagamento final
+    - valor restante (salário − adiantamento)
 
 ### 7.3 Regra mensal
 - Adiantamento e pagamento final pertencem ao **mesmo mês**.
@@ -183,8 +183,8 @@ O salário do mês pode ser composto por:
 
 - O salário é tratado como entidade própria e gera transações financeiras.
 - No **início de cada mês**, o sistema deve gerar **transações projetadas** para:
-  - adiantamento salarial (quando configurado)
-  - pagamento final (valor restante do salário)
+    - adiantamento salarial (quando configurado)
+    - pagamento final (valor restante do salário)
 
 #### Confirmação automática por data
 - As transações de salário **não são confirmadas automaticamente no início do mês**.
