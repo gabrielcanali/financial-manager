@@ -3,7 +3,7 @@
 ## Identificacao
 - **ID da tarefa:** API-018
 - **Titulo curto:** Transacoes (CRUD + persistencia mensal)
-- **Status:** TO-DO
+- **Status:** DONE
 - **Responsavel (agente):** Codex (GPT-5)
 - **Reasoning effort:** High
 
@@ -49,10 +49,10 @@ Transacoes sao o nucleo do sistema e devem seguir o modelo mensal em JSON, com v
 
 ## Criterios de Aceite
 A tarefa so pode ser movida para **DONE** se **todos** forem verdadeiros:
-- [ ] CRUD funciona com arquivo mensal correto
-- [ ] Validacoes de data e valor aplicadas
-- [ ] Edicao/exclusao recalcula totais do mes
-- [ ] Nao houve criacao de funcionalidade fora do escopo
+- [x] CRUD funciona com arquivo mensal correto
+- [x] Validacoes de data e valor aplicadas
+- [x] Edicao/exclusao recalcula totais do mes
+- [x] Nao houve criacao de funcionalidade fora do escopo
 
 ---
 

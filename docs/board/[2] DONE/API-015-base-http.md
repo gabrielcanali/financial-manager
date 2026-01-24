@@ -3,7 +3,7 @@
 ## Identificacao
 - **ID da tarefa:** API-015
 - **Titulo curto:** Base HTTP Express e padrao de resposta/erro
-- **Status:** TO-DO
+- **Status:** DONE
 - **Responsavel (agente):** Codex (GPT-5)
 - **Reasoning effort:** Medium
 
@@ -66,3 +66,5 @@ A tarefa so pode ser movida para **DONE** se **todos** forem verdadeiros:
 
 ## Pendencias / Observacoes
 - Nenhuma
+
+

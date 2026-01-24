@@ -3,7 +3,7 @@
 ## Identificacao
 - **ID da tarefa:** API-017
 - **Titulo curto:** Configuracao de cartao de credito (fechamento)
-- **Status:** TO-DO
+- **Status:** DONE
 - **Responsavel (agente):** Codex (GPT-5)
 - **Reasoning effort:** Medium
 
@@ -64,3 +64,5 @@ A tarefa so pode ser movida para **DONE** se **todos** forem verdadeiros:
 
 ## Pendencias / Observacoes
 - Nenhuma
+
+

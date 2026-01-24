@@ -7,6 +7,7 @@ const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MONTH_PATTERN = /^(\d{4})-(\d{2})$/;
 const VALID_DIRECTIONS = new Set(["income", "expense"]);
 const VALID_STATUSES = new Set(["confirmed", "projected"]);
+const VALID_SOURCES = new Set(["manual", "recurring", "installment", "salary"]);
 
 function parseIsoDate(dateString) {
   const match = ISO_DATE_PATTERN.exec(dateString);
@@ -85,8 +86,10 @@ function assertTransactionInput(transaction) {
   if (!transaction.source || typeof transaction.source !== "object") {
     throw new Error("Transaction source is required");
   }
-  if (transaction.source.type !== "manual") {
-    throw new Error("Transaction source.type must be manual");
+  if (!VALID_SOURCES.has(transaction.source.type)) {
+    throw new Error(
+      "Transaction source.type must be manual, recurring, installment, or salary"
+    );
   }
 }
 

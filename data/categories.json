@@ -1,3 +1,5 @@
 {
-  "items": []
+  "items": [
+    { "id": "cat_saved", "name": "Dinheiro Guardado", "isSpecial": true }
+  ]
 }
