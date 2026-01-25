@@ -3,7 +3,7 @@
 ## Identificacao
 - **ID da tarefa:** API-020
 - **Titulo curto:** Recorrencias (CRUD + geracao mensal)
-- **Status:** TO-DO
+- **Status:** DONE
 - **Responsavel (agente):** Codex (GPT-5)
 - **Reasoning effort:** High
 
@@ -48,10 +48,10 @@ Recorrencias geram transacoes no inicio do mes e precisam suportar edicao que af
 
 ## Criterios de Aceite
 A tarefa so pode ser movida para **DONE** se **todos** forem verdadeiros:
-- [ ] Recorrencias persistidas conforme modelo JSON
-- [ ] Transacoes geradas no inicio do mes
-- [ ] Edicao nao altera transacoes ja confirmadas
-- [ ] Nao houve criacao de funcionalidade fora do escopo
+- [x] Recorrencias persistidas conforme modelo JSON
+- [x] Transacoes geradas no inicio do mes
+- [x] Edicao nao altera transacoes ja confirmadas
+- [x] Nao houve criacao de funcionalidade fora do escopo
 
 ---
 

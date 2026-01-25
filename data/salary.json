@@ -1,0 +1,13 @@
+{
+  "baseSalary": 3000,
+  "direction": "income",
+  "categoryId": "cat_salary",
+  "description": "Salario",
+  "paymentDay": 30,
+  "advance": {
+    "enabled": true,
+    "day": 15,
+    "type": "percent",
+    "value": 40
+  }
+}

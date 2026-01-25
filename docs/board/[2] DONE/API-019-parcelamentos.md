@@ -3,7 +3,7 @@
 ## Identificacao
 - **ID da tarefa:** API-019
 - **Titulo curto:** Parcelamentos (mae + parcelas + conflitos)
-- **Status:** TO-DO
+- **Status:** DONE
 - **Responsavel (agente):** Codex (GPT-5)
 - **Reasoning effort:** High
 
@@ -51,10 +51,10 @@ Parcelamentos exigem transacao mae como metadado separado e regras claras de ger
 
 ## Criterios de Aceite
 A tarefa so pode ser movida para **DONE** se **todos** forem verdadeiros:
-- [ ] Mae e parcelas seguem modelo JSON
-- [ ] Regra de conflito respeita edicao local
-- [ ] Exclusao da mae oferece opcoes e respeita regras
-- [ ] Nao houve criacao de funcionalidade fora do escopo
+- [x] Mae e parcelas seguem modelo JSON
+- [x] Regra de conflito respeita edicao local
+- [x] Exclusao da mae oferece opcoes e respeita regras
+- [x] Nao houve criacao de funcionalidade fora do escopo
 
 ---
 

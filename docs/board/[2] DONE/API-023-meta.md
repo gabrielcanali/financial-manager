@@ -3,7 +3,7 @@
 ## Identificacao
 - **ID da tarefa:** API-023
 - **Titulo curto:** Meta (ultimo mes acessado)
-- **Status:** TO-DO
+- **Status:** DONE
 - **Responsavel (agente):** Codex (GPT-5)
 - **Reasoning effort:** Medium
 

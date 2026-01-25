@@ -3,7 +3,7 @@
 ## Identificacao
 - **ID da tarefa:** API-021
 - **Titulo curto:** Salario (config + projecao + confirmacao por data)
-- **Status:** TO-DO
+- **Status:** DONE
 - **Responsavel (agente):** Codex (GPT-5)
 - **Reasoning effort:** High
 

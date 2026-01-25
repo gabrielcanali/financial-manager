@@ -3,7 +3,7 @@
 ## Identificacao
 - **ID da tarefa:** API-024
 - **Titulo curto:** Testes de contrato e integracao da API
-- **Status:** TO-DO
+- **Status:** DONE
 - **Responsavel (agente):** Codex (GPT-5)
 - **Reasoning effort:** High
 

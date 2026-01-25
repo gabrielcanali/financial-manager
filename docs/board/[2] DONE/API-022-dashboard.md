@@ -3,7 +3,7 @@
 ## Identificacao
 - **ID da tarefa:** API-022
 - **Titulo curto:** Dashboard (resumo mensal/anual + deduplicacao)
-- **Status:** TO-DO
+- **Status:** DONE
 - **Responsavel (agente):** Codex (GPT-5)
 - **Reasoning effort:** High
 
