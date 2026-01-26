@@ -54,7 +54,205 @@ _(preenchido pelo responsável)_
 
 ## Pendências Abertas
 
-- Nenhuma
+### [P-008] Competência do cartão vs data da transação
+
+**Contexto**
+Desk check - Cartão de crédito (Q8). Dúvida sobre como representar competência da fatura
+quando `date` está antes do fechamento, mas a transação pertence ao mês seguinte.
+
+**Problema / Dúvida**
+Manter `date` como data real e calcular competência em outro lugar, ou ajustar `date`
+para cair dentro do mês da fatura?
+
+**Opções consideradas**
+- Opção A: Manter `date` real e calcular competência no dashboard/consulta.
+- Opção B: Ajustar `date` para o mês da fatura.
+- Opção C: Manter `date` real e adicionar campo explícito (ex.: `billingMonth`).
+
+**Recomendação do agente (não implementar)**
+Opção A. Mantém a data real e evita duplicar campos, com competência calculada na leitura.
+
+**Decisão final**
+_(preenchido pelo responsável)_
+
+**Status**
+- [ ] Em aberto
+- [ ] Resolvida
+
+---
+
+### [P-009] Compras avulsas no cartão (transação manual)
+
+**Contexto**
+Desk check - Cartão de crédito (Q9). Falta definir como marcar compras avulsas no cartão.
+
+**Problema / Dúvida**
+Não está definido como identificar transações manuais feitas no cartão para entrar na fatura.
+
+**Opções consideradas**
+- Opção A: Adicionar `payment.mode = creditCard` nas transações manuais.
+- Opção B: Criar `source.type = creditCard`.
+- Opção C: Inferir pelo `categoryId` ou outro campo (não recomendado).
+
+**Recomendação do agente (não implementar)**
+Opção A. Mantém `source.type` e adiciona um campo explícito de pagamento.
+
+**Decisão final**
+_(preenchido pelo responsável)_
+
+**Status**
+- [ ] Em aberto
+- [ ] Resolvida
+
+---
+
+### [P-010] Excluir mãe mantendo parcelas
+
+**Contexto**
+Desk check - Parcelamentos (Q10). Excluir a mãe (metadado) com `deleteParcels=false`.
+
+**Problema / Dúvida**
+As parcelas devem permanecer como parcelas (`installment.*`) ou virar transações normais?
+
+**Opções consideradas**
+- Opção A: Manter `installment.*` e `source.type = installment`.
+- Opção B: Remover `installment` e alterar `source.type` para `manual`.
+- Opção C: Excluir todas as parcelas.
+
+**Recomendação do agente (não implementar)**
+Opção A. Preserva o vínculo e evita perda de contexto.
+
+**Decisão final**
+_(preenchido pelo responsável)_
+
+**Status**
+- [ ] Em aberto
+- [ ] Resolvida
+
+---
+
+### [P-011] Conflito ao editar parcelas marcadas como `editedManually`
+
+**Contexto**
+Desk check - Parcelamentos (Q11). Definição do fluxo/erro quando há conflito.
+
+**Problema / Dúvida**
+Não está definido o status/fluxo quando o update do pai encontra parcelas editadas.
+
+**Opções consideradas**
+- Opção A: Retornar 409 e exigir `conflictStrategy`.
+- Opção B: Retornar 400 como erro de validação.
+- Opção C: Aplicar parcial e retornar 200 com aviso.
+
+**Recomendação do agente (não implementar)**
+Opção A. Conflito explícito evita sobrescrita silenciosa.
+
+**Decisão final**
+_(preenchido pelo responsável)_
+
+**Status**
+- [ ] Em aberto
+- [ ] Resolvida
+
+---
+
+### [P-012] `firstDate` em parcelamento com dia inexistente
+
+**Contexto**
+Desk check - Parcelamentos (Q12). `firstDate` pode gerar datas inválidas nos meses seguintes.
+
+**Problema / Dúvida**
+Não está definido como tratar meses sem o dia escolhido (ex.: 31 em fevereiro).
+
+**Opções consideradas**
+- Opção A: Ajustar para o último dia do mês.
+- Opção B: Rejeitar o parcelamento.
+- Opção C: Ajustar para o dia útil mais próximo.
+
+**Recomendação do agente (não implementar)**
+Opção A. Mantém previsibilidade e evita rejeição inesperada.
+
+**Decisão final**
+_(preenchido pelo responsável)_
+
+**Status**
+- [ ] Em aberto
+- [ ] Resolvida
+
+---
+
+### [P-013] `date` fora do mês do arquivo em transações de cartão
+
+**Contexto**
+Desk check - Transações (Q13). Regra atual exige `date` no mesmo mês do arquivo.
+
+**Problema / Dúvida**
+Não está definido se transações de cartão podem ter `date` fora do mês da fatura.
+
+**Opções consideradas**
+- Opção A: Manter regra rígida para todas as transações.
+- Opção B: Permitir exceção para cartão.
+- Opção C: Manter `date` real e adicionar campo de competência (ex.: `billingMonth`).
+
+**Recomendação do agente (não implementar)**
+Opção C. Preserva a data real e deixa a competência explícita.
+
+**Decisão final**
+_(preenchido pelo responsável)_
+
+**Status**
+- [ ] Em aberto
+- [ ] Resolvida
+
+---
+
+### [P-014] Escopo do dashboard mensal
+
+**Contexto**
+Desk check - Dashboard (Q14). Dúvida sobre o que entra no resumo mensal.
+
+**Problema / Dúvida**
+Não está definido se o dashboard deve gerar projeções automaticamente ou apenas ler arquivos.
+
+**Opções consideradas**
+- Opção A: Dashboard lê apenas o que já existe nos arquivos.
+- Opção B: Dashboard dispara geração automática.
+- Opção C: Dashboard projeta tudo em memória sem persistir.
+
+**Recomendação do agente (não implementar)**
+Opção A. Evita comportamento implícito e mantém previsibilidade.
+
+**Decisão final**
+_(preenchido pelo responsável)_
+
+**Status**
+- [ ] Em aberto
+- [ ] Resolvida
+
+---
+
+### [P-015] Definição de "dia útil" para salário
+
+**Contexto**
+Desk check - Salário (Q4). Foi citado ajuste para dia útil mais próximo.
+
+**Problema / Dúvida**
+Não está definido o que conta como dia útil (apenas fim de semana ou feriados).
+
+**Opções consideradas**
+- Opção A: Considerar apenas sábado/domingo.
+- Opção B: Considerar feriados com calendário fixo.
+- Opção C: Permitir configuração de feriados.
+
+**Recomendação do agente (não implementar)**
+Opção A para o MVP, por simplicidade.
+
+**Decisão final**
+_(preenchido pelo responsável)_
+
+**Status**
+- [ ] Em aberto
+- [ ] Resolvida
 
 ## Histórico de Pendências Resolvidas
 
